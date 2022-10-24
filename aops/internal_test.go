@@ -132,3 +132,110 @@ func Test_position(t *testing.T) {
 		})
 	}
 }
+
+func Test_addCode(t *testing.T) {
+	pkg, _ := parser.ParseDir(token.NewFileSet(), "../unitTests", func(info fs.FileInfo) bool {
+		//	ignore all logic check
+		return true
+	}, parser.ParseComments)
+
+	pkgs := position(pkg, "@middleware-a")
+
+	type args struct {
+		pkgs      map[string][]string
+		funStmt   []string
+		deferStmt []string
+		replace   bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "normal add code",
+			args: struct {
+				pkgs      map[string][]string
+				funStmt   []string
+				deferStmt []string
+				replace   bool
+			}{pkgs: pkgs, funStmt: []string{
+				`func(){fmt.Println("add by addCode")}()`,
+			}, deferStmt: []string{
+				`defer func(){fmt.Println("add by addCode")}()`,
+			}, replace: false},
+			wantErr: false,
+		},
+		{
+			name: "only add fun code",
+			args: struct {
+				pkgs      map[string][]string
+				funStmt   []string
+				deferStmt []string
+				replace   bool
+			}{pkgs: pkgs, funStmt: []string{
+				`func(){fmt.Println("add by addCode")}()`,
+			}, deferStmt: nil, replace: false},
+			wantErr: false,
+		},
+		{
+			name: "only add defer code",
+			args: struct {
+				pkgs      map[string][]string
+				funStmt   []string
+				deferStmt []string
+				replace   bool
+			}{pkgs: pkgs, funStmt: nil, deferStmt: []string{
+				`defer func(){fmt.Println("add by addCode")}()`,
+			}, replace: false},
+			wantErr: false,
+		},
+		{
+			name: "add nothing codes",
+			args: struct {
+				pkgs      map[string][]string
+				funStmt   []string
+				deferStmt []string
+				replace   bool
+			}{pkgs: pkgs, funStmt: nil, deferStmt: nil, replace: false},
+			wantErr: false,
+		},
+		{
+			name: "add two fun codes and one defer code",
+			args: struct {
+				pkgs      map[string][]string
+				funStmt   []string
+				deferStmt []string
+				replace   bool
+			}{pkgs: pkgs, funStmt: []string{
+				`func(){fmt.Println("add by addCode once")}()`,
+				`func(){fmt.Println("add by addCode twice")}()`,
+			}, deferStmt: []string{
+				`defer func(){fmt.Println("add by addCode")}()`,
+			}, replace: false},
+			wantErr: false,
+		},
+		{
+			name: "add wrong defer code",
+			args: struct {
+				pkgs      map[string][]string
+				funStmt   []string
+				deferStmt []string
+				replace   bool
+			}{pkgs: pkgs, funStmt: []string{
+				`func(){fmt.Println("add by addCode once")}()`,
+				`func(){fmt.Println("add by addCode twice")}()`,
+			}, deferStmt: []string{
+				`fmt.Println("add by addCode"`,
+			}, replace: false},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := addCode(tt.args.pkgs, tt.args.funStmt, tt.args.deferStmt, tt.args.replace); (err != nil) != tt.wantErr {
+				t.Errorf("addCode() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
