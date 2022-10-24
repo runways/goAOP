@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_parserStmt(t *testing.T) {
+func Test_ParserStmt(t *testing.T) {
 	type args struct {
 		stmt string
 	}
@@ -59,7 +59,7 @@ func Test_parserStmt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parserStmt(tt.args.stmt)
+			got, err := ParserStmt(tt.args.stmt)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parserStmt() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -71,7 +71,7 @@ func Test_parserStmt(t *testing.T) {
 	}
 }
 
-func Test_position(t *testing.T) {
+func Test_Position(t *testing.T) {
 
 	pkg, _ := parser.ParseDir(token.NewFileSet(), "../unitTests", func(info fs.FileInfo) bool {
 		//	ignore all logic check
@@ -126,20 +126,20 @@ func Test_position(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := position(tt.args.pkgs, tt.args.id); !reflect.DeepEqual(got, tt.want) {
+			if got := Position(tt.args.pkgs, tt.args.id); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("position() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_addCode(t *testing.T) {
+func Test_AddCode(t *testing.T) {
 	pkg, _ := parser.ParseDir(token.NewFileSet(), "../unitTests", func(info fs.FileInfo) bool {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
 
-	pkgs := position(pkg, "@middleware-a")
+	pkgs := Position(pkg, "@middleware-a")
 
 	type args struct {
 		pkgs      map[string][]string
@@ -233,7 +233,7 @@ func Test_addCode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := addCode(tt.args.pkgs, tt.args.funStmt, tt.args.deferStmt, tt.args.replace); (err != nil) != tt.wantErr {
+			if err := AddCode(tt.args.pkgs, tt.args.funStmt, tt.args.deferStmt, tt.args.replace); (err != nil) != tt.wantErr {
 				t.Errorf("addCode() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
