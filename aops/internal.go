@@ -9,9 +9,23 @@ import (
 	"go/printer"
 	"go/scanner"
 	"go/token"
+	"io/fs"
 	"os"
 	"strings"
 )
+
+// ParseDir use `token.ParserDir` parser specify dir. And use `filter` for filter flile info at the same time
+// If filter is nil, it will pass all files as default.
+// When parse success, `ParseDir` will return a map save file name and package pointer. If failed, return a error
+func ParseDir(dir string, filter func(info fs.FileInfo) bool) (map[string]*ast.Package, error) {
+	if filter == nil {
+		filter = func(info fs.FileInfo) bool {
+			return true
+		}
+	}
+
+	return parser.ParseDir(token.NewFileSet(), dir, filter, parser.ParseComments)
+}
 
 // Position Get all functions that need add AOP.
 //

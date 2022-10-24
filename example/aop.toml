@@ -1,0 +1,13 @@
+[[middleware]]
+    id="@middleware-a"
+    funcStmt=["""func(){
+                fmt.Println("")
+            }()
+        """]
+    deferStmt=["""defer func(){
+                fmt.Println("")
+            }()
+        """]
+    [middleware.package]
+        name = "f"
+        path = "fmt"

@@ -5,8 +5,8 @@ import (
 )
 
 type FirstStruct struct {
-	name string
-	Age  int
+	name string `json:"name"`
+	Age  int    `json:"age"`
 }
 
 // InvokeFirstFunction
