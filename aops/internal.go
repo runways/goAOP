@@ -1,4 +1,4 @@
-package goAOP
+package aops
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ import (
 // name, value is a function name array.
 func position(pkgs map[string]*ast.Package, id string) map[string][]string {
 	result := make(map[string][]string)
-	
+
 	for _, pack := range pkgs {
 		for name, f := range pack.Files {
 			if strings.HasSuffix(name, "_test.go") {

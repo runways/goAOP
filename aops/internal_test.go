@@ -1,4 +1,4 @@
-package goAOP
+package aops
 
 import (
 	"go/ast"
@@ -72,12 +72,12 @@ func Test_parserStmt(t *testing.T) {
 }
 
 func Test_position(t *testing.T) {
-	
-	pkg, _ := parser.ParseDir(token.NewFileSet(), "./unitTests", func(info fs.FileInfo) bool {
+
+	pkg, _ := parser.ParseDir(token.NewFileSet(), "../unitTests", func(info fs.FileInfo) bool {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-	
+
 	type args struct {
 		pkgs map[string]*ast.Package
 		id   string
@@ -94,7 +94,7 @@ func Test_position(t *testing.T) {
 				id   string
 			}{pkgs: pkg, id: "@middleware-a"},
 			want: map[string][]string{
-				"unitTests/test.go": []string{
+				"../unitTests/test.go": []string{
 					"InvokeFirstFunction",
 				},
 			},
