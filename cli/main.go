@@ -36,7 +36,16 @@ func main() {
 	
 	pkgMap := aops.Position(pkgs, aopMap)
 	
-	aops.AddCode(pkgMap, c.MiddWareMap, *replace)
+	modify, err := aops.AddCode(pkgMap, c.MiddWareMap, *replace)
+	
+	err = aops.AddImport(pkgMap, c.MiddWareMap, modify, *replace)
+	if err != nil {
+		fmt.Println("FAILED")
+		fmt.Println(err.Error())
+		os.Exit(-1)
+	}
+	
+	fmt.Println("// SUCCESS")
 }
 
 func check() {

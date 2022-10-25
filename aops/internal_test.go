@@ -127,7 +127,7 @@ func Test_Position(t *testing.T) {
 			args: struct {
 				pkgs map[string]*ast.Package
 				id   map[string]struct{}
-			}{pkgs: pkg, id: map[string]struct{}{"@middleware-b": struct{}{}}},
+			}{pkgs: pkg, id: map[string]struct{}{"@middleware-c": struct{}{}}},
 			want: map[string][]fun{},
 		},
 		{
@@ -162,9 +162,10 @@ func Test_AddCode(t *testing.T) {
 		replace bool
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name       string
+		args       args
+		wantErr    bool
+		wantModify map[string][]string
 	}{
 		{
 			name: "normal add code",
@@ -184,6 +185,11 @@ func Test_AddCode(t *testing.T) {
 				},
 			}, replace: false},
 			wantErr: false,
+			wantModify: map[string][]string{
+				"../unitTests/test.go": []string{
+					"@middleware-a",
+				},
+			},
 		},
 		{
 			name: "only add fun code",
@@ -201,6 +207,11 @@ func Test_AddCode(t *testing.T) {
 				},
 			}, replace: false},
 			wantErr: false,
+			wantModify: map[string][]string{
+				"../unitTests/test.go": []string{
+					"@middleware-a",
+				},
+			},
 		},
 		{
 			name: "only add defer code",
@@ -218,6 +229,11 @@ func Test_AddCode(t *testing.T) {
 				},
 			}, replace: false},
 			wantErr: false,
+			wantModify: map[string][]string{
+				"../unitTests/test.go": []string{
+					"@middleware-a",
+				},
+			},
 		},
 		{
 			name: "add nothing codes",
@@ -233,6 +249,11 @@ func Test_AddCode(t *testing.T) {
 				},
 			}, replace: false},
 			wantErr: false,
+			wantModify: map[string][]string{
+				"../unitTests/test.go": []string{
+					"@middleware-a",
+				},
+			},
 		},
 		{
 			name: "add two fun codes and one defer code",
@@ -263,6 +284,12 @@ func Test_AddCode(t *testing.T) {
 				},
 			}, replace: false},
 			wantErr: false,
+			wantModify: map[string][]string{
+				"../unitTests/test.go": []string{
+					"@middleware-a",
+					"@middleware-b",
+				},
+			},
 		},
 		{
 			name: "add wrong defer code",
@@ -282,13 +309,18 @@ func Test_AddCode(t *testing.T) {
 					Packs: nil,
 				},
 			}, replace: false},
-			wantErr: true,
+			wantErr:    true,
+			wantModify: nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := AddCode(tt.args.pkgs, tt.args.stmt, tt.args.replace); (err != nil) != tt.wantErr {
+			m, err := AddCode(tt.args.pkgs, tt.args.stmt, tt.args.replace)
+			if (err != nil) != tt.wantErr {
 				t.Errorf("addCode() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(m, tt.wantModify) {
+				t.Errorf("addCode() modify = %v, wantErr %v", m, tt.wantModify)
 			}
 		})
 	}
@@ -414,6 +446,63 @@ func Test_getIntersection(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := getIntersection(tt.args.arr, tt.args.ids); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("getIntersection() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAddImport(t *testing.T) {
+	pkg, _ := parser.ParseDir(token.NewFileSet(), "../unitTests", func(info fs.FileInfo) bool {
+		//	ignore all logic check
+		return true
+	}, parser.ParseComments)
+	
+	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}})
+	
+	type args struct {
+		pkgs    map[string][]fun
+		stmt    map[string]StmtParams
+		modify  map[string][]string
+		replace bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "normal test",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				modify  map[string][]string
+				replace bool
+			}{pkgs: pkgs, stmt: map[string]StmtParams{
+				"@middleware-a": {
+					FunStmt: []string{
+						`func(){fmt.Println("add by addCode")}()`,
+					},
+					DeferStmt: []string{
+						`defer func(){fmt.Println("add by addCode")}()`,
+					},
+					Packs: []Pack{
+						{
+							Name: "f",
+							Path: "\"fmt\"",
+						},
+					},
+				},
+			}, modify: map[string][]string{
+				"../unitTests/test.go": []string{
+					"@middleware-a",
+				},
+			}, replace: false},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := AddImport(tt.args.pkgs, tt.args.stmt, tt.args.modify, tt.args.replace); (err != nil) != tt.wantErr {
+				t.Errorf("AddImport() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
