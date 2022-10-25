@@ -23,7 +23,7 @@ func ParseDir(dir string, filter func(info fs.FileInfo) bool) (map[string]*ast.P
 			return true
 		}
 	}
-
+	
 	return parser.ParseDir(token.NewFileSet(), dir, filter, parser.ParseComments)
 }
 
@@ -35,7 +35,7 @@ func ParseDir(dir string, filter func(info fs.FileInfo) bool) (map[string]*ast.P
 // name, value is a function name array.
 func Position(pkgs map[string]*ast.Package, id string) map[string][]string {
 	result := make(map[string][]string)
-
+	
 	for _, pack := range pkgs {
 		for name, f := range pack.Files {
 			if strings.HasSuffix(name, "_test.go") {
@@ -59,14 +59,14 @@ func Position(pkgs map[string]*ast.Package, id string) map[string][]string {
 			}
 		}
 	}
-
+	
 	return result
 }
 
-// ParserStmt Convert stmt to ast.Stmt
+// parserStmt Convert stmt to ast.Stmt
 // If the stmt is a valid stmt, then return ast.Stmt.
 // Otherwise, return a error.
-func ParserStmt(stmt string) (ast.Stmt, error) {
+func parserStmt(stmt string) (ast.Stmt, error) {
 	expr := "func(){" + stmt + ";}"
 	if e, err := parser.ParseExpr(expr); err != nil {
 		if e, err := parser.ParseExpr(stmt); err == nil {
@@ -113,44 +113,44 @@ func AddCode(pkgs map[string][]string, funStmt, deferStmt []string, replace bool
 		}
 		exprs[idx] = exprInsert
 	}
-
+	
 	for idx, c := range deferStmt {
-		stmtInsert, err := ParserStmt(c)
+		stmtInsert, err := parserStmt(c)
 		if err != nil {
 			return err
 		}
 		stmts[idx] = stmtInsert
 	}
-
+	
 	for name, funs := range pkgs {
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, name, nil, parser.ParseComments)
 		if err != nil {
 			return err
 		}
-
+		
 		fm := make(map[string]interface{})
 		for _, n := range funs {
 			fm[n] = nil
 		}
-
+		
 		decls := make([]ast.Decl, 0, len(f.Decls))
 		for _, decl := range f.Decls {
 			switch t := decl.(type) {
 			case *ast.FuncDecl:
 				if _, exist := fm[t.Name.Name]; exist {
 					stats := make([]ast.Stmt, 0, len(t.Body.List)+len(exprs))
-
+					
 					for _, e := range exprs {
 						stats = append(stats, &ast.ExprStmt{
 							X: e,
 						})
 					}
-
+					
 					for _, e := range stmts {
 						stats = append(stats, e)
 					}
-
+					
 					stats = append(stats, t.Body.List...)
 					t.Body.List = stats
 				}
@@ -160,12 +160,12 @@ func AddCode(pkgs map[string][]string, funStmt, deferStmt []string, replace bool
 			}
 		}
 		f.Decls = decls
-
+		
 		var cfg printer.Config
 		var buf bytes.Buffer
-
+		
 		cfg.Fprint(&buf, fset, f)
-
+		
 		dest, err := format.Source(buf.Bytes())
 		if err != nil {
 			return err
@@ -176,6 +176,6 @@ func AddCode(pkgs map[string][]string, funStmt, deferStmt []string, replace bool
 			fmt.Println(string(dest))
 		}
 	}
-
+	
 	return nil
 }

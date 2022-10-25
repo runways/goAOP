@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_ParserStmt(t *testing.T) {
+func Test_parserStmt(t *testing.T) {
 	type args struct {
 		stmt string
 	}
@@ -59,7 +59,7 @@ func Test_ParserStmt(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParserStmt(tt.args.stmt)
+			got, err := parserStmt(tt.args.stmt)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parserStmt() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -72,12 +72,12 @@ func Test_ParserStmt(t *testing.T) {
 }
 
 func Test_Position(t *testing.T) {
-
+	
 	pkg, _ := parser.ParseDir(token.NewFileSet(), "../unitTests", func(info fs.FileInfo) bool {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-
+	
 	type args struct {
 		pkgs map[string]*ast.Package
 		id   string
@@ -138,9 +138,9 @@ func Test_AddCode(t *testing.T) {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-
+	
 	pkgs := Position(pkg, "@middleware-a")
-
+	
 	type args struct {
 		pkgs      map[string][]string
 		funStmt   []string
