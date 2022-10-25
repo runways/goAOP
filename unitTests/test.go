@@ -21,6 +21,9 @@ func (fs FirstStruct) InvokeSecondFunction() string {
 }
 
 // InvokeFirstFunction a same name function, but not belongs any struct
-func InvokeFirstFunction() {
+// @middleware-a
+func InvokeFirstFunction() {}
 
-}
+// InvokeSecondFunction a same name function, but not belongs any struct
+// @middleware-b
+func InvokeSecondFunction() {}

@@ -80,48 +80,63 @@ func Test_Position(t *testing.T) {
 	
 	type args struct {
 		pkgs map[string]*ast.Package
-		id   string
+		id   map[string]struct{}
 	}
 	tests := []struct {
 		name string
 		args args
-		want map[string][]string
+		want map[string][]fun
 	}{
 		{
 			name: "valid position",
 			args: struct {
 				pkgs map[string]*ast.Package
-				id   string
-			}{pkgs: pkg, id: "@middleware-a"},
-			want: map[string][]string{
-				"../unitTests/test.go": []string{
-					"InvokeFirstFunction",
+				id   map[string]struct{}
+			}{
+				pkgs: pkg, id: map[string]struct{}{"@middleware-a": struct{}{}},
+			},
+			want: map[string][]fun{
+				"../unitTests/test.go": []fun{
+					{
+						owner: "FirstStruct",
+						name:  "InvokeFirstFunction",
+						aopIds: []string{
+							"@middleware-a",
+						},
+					},
+					{
+						owner: "",
+						name:  "InvokeFirstFunction",
+						aopIds: []string{
+							"@middleware-a",
+						},
+					},
 				},
 			},
 		},
 		{
-			name: "invalid position",
+			name: "nil position",
 			args: struct {
 				pkgs map[string]*ast.Package
-				id   string
-			}{pkgs: nil, id: "@middleware-a"},
-			want: map[string][]string{},
+				id   map[string]struct{}
+			}{pkgs: nil, id: map[string]struct{}{"@middleware-a": struct{}{}}},
+			want: map[string][]fun{},
 		},
 		{
-			name: "invalid position",
+			name: "no exist position",
 			args: struct {
 				pkgs map[string]*ast.Package
-				id   string
-			}{pkgs: pkg, id: "@middleware-b"},
-			want: map[string][]string{},
+				id   map[string]struct{}
+			}{pkgs: pkg, id: map[string]struct{}{"@middleware-b": struct{}{}}},
+			want: map[string][]fun{},
 		},
 		{
-			name: "invalid position",
+			name: "nil and no exist position",
 			args: struct {
 				pkgs map[string]*ast.Package
-				id   string
-			}{pkgs: nil, id: "@middleware-b"},
-			want: map[string][]string{},
+				id   map[string]struct{}
+			}{pkgs: nil, id: map[string]struct{}{"@middleware-b": struct{}{}}},
+			want: map[string][]fun{},
 		},
 	}
 	for _, tt := range tests {
@@ -139,13 +154,12 @@ func Test_AddCode(t *testing.T) {
 		return true
 	}, parser.ParseComments)
 	
-	pkgs := Position(pkg, "@middleware-a")
+	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}})
 	
 	type args struct {
-		pkgs      map[string][]string
-		funStmt   []string
-		deferStmt []string
-		replace   bool
+		pkgs    map[string][]fun
+		stmt    map[string]StmtParams
+		replace bool
 	}
 	tests := []struct {
 		name    string
@@ -155,85 +169,125 @@ func Test_AddCode(t *testing.T) {
 		{
 			name: "normal add code",
 			args: struct {
-				pkgs      map[string][]string
-				funStmt   []string
-				deferStmt []string
-				replace   bool
-			}{pkgs: pkgs, funStmt: []string{
-				`func(){fmt.Println("add by addCode")}()`,
-			}, deferStmt: []string{
-				`defer func(){fmt.Println("add by addCode")}()`,
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: pkgs, stmt: map[string]StmtParams{
+				"@middleware-a": {
+					FunStmt: []string{
+						`func(){fmt.Println("add by addCode")}()`,
+					},
+					DeferStmt: []string{
+						`defer func(){fmt.Println("add by addCode")}()`,
+					},
+					Packs: nil,
+				},
 			}, replace: false},
 			wantErr: false,
 		},
 		{
 			name: "only add fun code",
 			args: struct {
-				pkgs      map[string][]string
-				funStmt   []string
-				deferStmt []string
-				replace   bool
-			}{pkgs: pkgs, funStmt: []string{
-				`func(){fmt.Println("add by addCode")}()`,
-			}, deferStmt: nil, replace: false},
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: pkgs, stmt: map[string]StmtParams{
+				"@middleware-a": {
+					FunStmt: []string{
+						`func(){fmt.Println("add by addCode")}()`,
+					},
+					DeferStmt: []string{},
+					Packs:     nil,
+				},
+			}, replace: false},
 			wantErr: false,
 		},
 		{
 			name: "only add defer code",
 			args: struct {
-				pkgs      map[string][]string
-				funStmt   []string
-				deferStmt []string
-				replace   bool
-			}{pkgs: pkgs, funStmt: nil, deferStmt: []string{
-				`defer func(){fmt.Println("add by addCode")}()`,
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: pkgs, stmt: map[string]StmtParams{
+				"@middleware-a": {
+					FunStmt: []string{},
+					DeferStmt: []string{
+						`defer func(){fmt.Println("add by addCode")}()`,
+					},
+					Packs: nil,
+				},
 			}, replace: false},
 			wantErr: false,
 		},
 		{
 			name: "add nothing codes",
 			args: struct {
-				pkgs      map[string][]string
-				funStmt   []string
-				deferStmt []string
-				replace   bool
-			}{pkgs: pkgs, funStmt: nil, deferStmt: nil, replace: false},
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: pkgs, stmt: map[string]StmtParams{
+				"@middleware-a": {
+					FunStmt:   []string{},
+					DeferStmt: []string{},
+					Packs:     nil,
+				},
+			}, replace: false},
 			wantErr: false,
 		},
 		{
 			name: "add two fun codes and one defer code",
 			args: struct {
-				pkgs      map[string][]string
-				funStmt   []string
-				deferStmt []string
-				replace   bool
-			}{pkgs: pkgs, funStmt: []string{
-				`func(){fmt.Println("add by addCode once")}()`,
-				`func(){fmt.Println("add by addCode twice")}()`,
-			}, deferStmt: []string{
-				`defer func(){fmt.Println("add by addCode")}()`,
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: pkgs, stmt: map[string]StmtParams{
+				"@middleware-a": {
+					FunStmt: []string{
+						`func(){fmt.Println("add by addCode once")}()`,
+						`func(){fmt.Println("add by addCode twice")}()`,
+					},
+					DeferStmt: []string{
+						`defer func(){fmt.Println("add by addCode")}()`,
+					},
+					Packs: nil,
+				},
+				"@middleware-b": {
+					FunStmt: []string{
+						`func(){fmt.Println("add middleware-b by addCode once")}()`,
+						`func(){fmt.Println("add by addCode twice")}()`,
+					},
+					DeferStmt: []string{
+						`defer func(){fmt.Println("middleware-b add by addCode")}()`,
+					},
+					Packs: nil,
+				},
 			}, replace: false},
 			wantErr: false,
 		},
 		{
 			name: "add wrong defer code",
 			args: struct {
-				pkgs      map[string][]string
-				funStmt   []string
-				deferStmt []string
-				replace   bool
-			}{pkgs: pkgs, funStmt: []string{
-				`func(){fmt.Println("add by addCode once")}()`,
-				`func(){fmt.Println("add by addCode twice")}()`,
-			}, deferStmt: []string{
-				`fmt.Println("add by addCode"`,
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: pkgs, stmt: map[string]StmtParams{
+				"@middleware-a": {
+					FunStmt: []string{
+						`func(){fmt.Println("add by addCode once")}()`,
+						`func(){fmt.Println("add by addCode twice")}()`,
+					},
+					DeferStmt: []string{
+						`fmt.Println("add by addCode"`,
+					},
+					Packs: nil,
+				},
 			}, replace: false},
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := AddCode(tt.args.pkgs, tt.args.funStmt, tt.args.deferStmt, tt.args.replace); (err != nil) != tt.wantErr {
+			if err := AddCode(tt.args.pkgs, tt.args.stmt, tt.args.replace); (err != nil) != tt.wantErr {
 				t.Errorf("addCode() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

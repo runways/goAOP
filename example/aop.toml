@@ -8,6 +8,20 @@
                 fmt.Println("")
             }()
         """]
-    [middleware.package]
+    [[middleware.package]]
+        name = "f"
+        path = "fmt"
+
+[[middleware]]
+    id="@middleware-b"
+    funcStmt=["""func(){
+                    fmt.Println("middleware-b install")
+                }()
+            """]
+    deferStmt=["""defer func(){
+                    fmt.Println("middleware-b install")
+                }()
+            """]
+    [[middleware.package]]
         name = "f"
         path = "fmt"

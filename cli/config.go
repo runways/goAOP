@@ -1,17 +1,20 @@
 package main
 
-import "github.com/BurntSushi/toml"
+import (
+	"github.com/BurntSushi/toml"
+	"github.com/runways/goAOP/aops"
+)
 
 type Config struct {
 	MiddWare    []middleWare `toml:"middleware"`
-	MiddWareMap map[string]middleWare
+	MiddWareMap map[string]aops.StmtParams
 }
 
 type middleWare struct {
 	ID        string   `toml:"id"`
 	FuncStmt  []string `toml:"funcStmt"`
 	DeferStmt []string `toml:"deferStmt"`
-	Package   pack     `toml:"package"`
+	Package   []pack   `toml:"package"`
 }
 
 type pack struct {
@@ -24,12 +27,23 @@ func parseConfig(file string) (c Config, err error) {
 	if err != nil {
 		return
 	}
-
-	mwm := make(map[string]middleWare, len(c.MiddWare))
+	
+	mwm := make(map[string]aops.StmtParams, len(c.MiddWare))
 	for _, m := range c.MiddWare {
-		mwm[m.ID] = m
+		var p []aops.Pack
+		for _, _p := range m.Package {
+			p = append(p, aops.Pack{
+				Name: _p.Name,
+				Path: _p.Path,
+			})
+		}
+		mwm[m.ID] = aops.StmtParams{
+			FunStmt:   m.FuncStmt,
+			DeferStmt: m.DeferStmt,
+			Packs:     p,
+		}
 	}
-
+	
 	c.MiddWareMap = mwm
 	return
 }
