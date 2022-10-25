@@ -19,3 +19,8 @@ func (fs FirstStruct) InvokeFirstFunction() string {
 func (fs FirstStruct) InvokeSecondFunction() string {
 	return ""
 }
+
+// InvokeFirstFunction a same name function, but not belongs any struct
+func InvokeFirstFunction() {
+
+}

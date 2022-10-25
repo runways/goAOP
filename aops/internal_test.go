@@ -287,3 +287,80 @@ func Test_extractIdFromComment(t *testing.T) {
 		})
 	}
 }
+
+func Test_getIntersection(t *testing.T) {
+	type args struct {
+		arr []string
+		ids map[string]struct{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "nil test",
+			args: struct {
+				arr []string
+				ids map[string]struct{}
+			}{arr: []string{
+				"@middleware-a",
+				"@middleware-b",
+				"@middleware-c",
+			}, ids: map[string]struct{}{
+				"@middleware": struct {
+				}{},
+			}},
+			want: nil,
+		},
+		{
+			name: "half intersection test",
+			args: struct {
+				arr []string
+				ids map[string]struct{}
+			}{arr: []string{
+				"@middleware-a",
+				"@middleware-b",
+				"@middleware-c",
+			}, ids: map[string]struct{}{
+				"@middleware": struct {
+				}{},
+				"@middleware-a": struct {
+				}{},
+			}},
+			want: []string{"@middleware-a"},
+		},
+		{
+			name: "full intersection test",
+			args: struct {
+				arr []string
+				ids map[string]struct{}
+			}{arr: []string{
+				"@middleware-a",
+				"@middleware-b",
+				"@middleware-c",
+			}, ids: map[string]struct{}{
+				"@middleware": struct {
+				}{},
+				"@middleware-a": struct {
+				}{},
+				"@middleware-c": struct {
+				}{},
+				"@middleware-b": struct {
+				}{},
+			}},
+			want: []string{
+				"@middleware-a",
+				"@middleware-b",
+				"@middleware-c",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getIntersection(tt.args.arr, tt.args.ids); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getIntersection() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
