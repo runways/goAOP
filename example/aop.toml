@@ -19,9 +19,13 @@
                 }()
             """]
     deferStmt=["""defer func(){
+                    log.Println(time.Now())
                     log.Println("middleware-b install")
                 }()
             """]
     [[middleware.package]]
         name = "log"
         path = """ "github.com/sirupsen/logrus" """
+    [[middleware.package]]
+        name = ""
+        path = """ "time" """

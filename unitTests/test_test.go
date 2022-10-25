@@ -30,6 +30,7 @@ func TestFirstStruct_InvokeFirstFunction(t *testing.T) {
 			if got := fs.InvokeFirstFunction(); got != tt.want {
 				t.Errorf("InvokeFirstFunction() = %v, want %v", got, tt.want)
 			}
+			InvokeSecondFunction()
 		})
 	}
 }
