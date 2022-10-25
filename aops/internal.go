@@ -27,6 +27,31 @@ func ParseDir(dir string, filter func(info fs.FileInfo) bool) (map[string]*ast.P
 	return parser.ParseDir(token.NewFileSet(), dir, filter, parser.ParseComments)
 }
 
+// extractIdFromComment get AOP ids from comment.
+// Valid AOP id starts with '@' and follows a word.
+// like `@Middleware`, `@middleware-a`, `@middleWare`
+// are valid
+// The id can not end with '@', likes that '@','@middleware@'
+// are invalid
+func extractIdFromComment(comment string) []string {
+	var result []string
+	comments := strings.Split(comment, "//")
+	for _, _comment := range comments {
+		comments := strings.Split(_comment, " ")
+		for _, c := range comments {
+			if strings.HasPrefix(c, "@") {
+				_c := strings.TrimSpace(c)
+				if len(_c) > 1 &&
+					!strings.HasSuffix(_c, "@") {
+					result = append(result, strings.TrimSpace(c))
+				}
+			}
+		}
+	}
+	
+	return result
+}
+
 // Position Get all functions that need add AOP.
 //
 // Pkgs should generate by `parser.ParseDir` and `id` is the AOP middleware name, e.g. @trace.

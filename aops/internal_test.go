@@ -239,3 +239,51 @@ func Test_AddCode(t *testing.T) {
 		})
 	}
 }
+
+func Test_extractIdFromComment(t *testing.T) {
+	type args struct {
+		comment string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "a valid id",
+			args: struct{ comment string }{comment: `// a function comment
+// @middleware-a
+`},
+			want: []string{"@middleware-a"},
+		},
+		{
+			name: "two valid ids",
+			args: struct{ comment string }{comment: `// a function comment
+// @middleware-a
+// @Middleware
+`},
+			want: []string{"@middleware-a", "@Middleware"},
+		},
+		{
+			name: "inValid id",
+			args: struct{ comment string }{comment: `// a function comment
+// @ middleware
+`},
+			want: nil,
+		},
+		{
+			name: "inValid id",
+			args: struct{ comment string }{comment: `// a function comment
+// @@ middleware
+`},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := extractIdFromComment(tt.args.comment); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("extractIdFromComment() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
