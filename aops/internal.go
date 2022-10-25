@@ -161,7 +161,9 @@ func AddCode(pkgs map[string][]string, funStmt, deferStmt []string, replace bool
 		}
 		f.Decls = decls
 		
-		var cfg printer.Config
+		cfg := printer.Config{
+			Mode: printer.UseSpaces,
+		}
 		var buf bytes.Buffer
 		
 		cfg.Fprint(&buf, fset, f)
