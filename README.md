@@ -113,6 +113,8 @@ Usage of ./bin/aop:
     	Replace source code file or not, default is true (default true)
 ```
 
+Then execute `./bin/aop -config example/aop.toml -dir ./unitTests`, you will see the effective.
+
 `goAOP` also supply a configure file , named aop.toml, in example dir. 
 
 ## How to use goAOP sdk?
