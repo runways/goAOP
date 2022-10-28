@@ -325,77 +325,86 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 			return nil, err
 		}
 		
-		fm := make(map[string]fun)
+		fm := make(map[string][]fun)
 		var addId []string
 		
 		for _, n := range funs {
-			fm[fmt.Sprintf("%s-%s", n.name, n.owner)] = n
+			ns, exist := fm[fmt.Sprintf("%s-%s", n.name, n.owner)]
+			if exist {
+				ns = append(ns, n)
+				fm[fmt.Sprintf("%s-%s", n.name, n.owner)] = ns
+			} else {
+				fm[fmt.Sprintf("%s-%s", n.name, n.owner)] = []fun{n}
+			}
+			
 		}
 		
 		decls := make([]ast.Decl, 0, len(f.Decls))
 		for _, decl := range f.Decls {
 			switch t := decl.(type) {
 			case *ast.FuncDecl:
-				if fn, exist := fm[fullId(t)]; exist {
-					if isEqual(t, fn) {
-						var stats []ast.Stmt
-						for _, id := range fn.aopIds {
-							
-							funStmt := stmt[id].FunStmt
-							deferStmt := stmt[id].DeferStmt
-							funcStmt := stmt[id].FunVarStmt
-							
-							exprs := make([]ast.Expr, len(funStmt))
-							stmts := make([]ast.Stmt, len(deferStmt))
-							funcs := make([]ast.Stmt, len(funcStmt))
-							
-							for idx, c := range funStmt {
-								exprInsert, err := parser.ParseExpr(c)
+				if _fn, exist := fm[fullId(t)]; exist {
+					for _, fn := range _fn {
+						if isEqual(t, fn) {
+							var stats []ast.Stmt
+							for _, id := range fn.aopIds {
+								
+								funStmt := stmt[id].FunStmt
+								deferStmt := stmt[id].DeferStmt
+								funcStmt := stmt[id].FunVarStmt
+								
+								exprs := make([]ast.Expr, len(funStmt))
+								stmts := make([]ast.Stmt, len(deferStmt))
+								funcs := make([]ast.Stmt, len(funcStmt))
+								
+								for idx, c := range funStmt {
+									exprInsert, err := parser.ParseExpr(c)
+									if err != nil {
+										return nil, err
+									}
+									exprs[idx] = exprInsert
+								}
+								
+								for idx, c := range deferStmt {
+									stmtInsert, err := parserStmt(c)
+									if err != nil {
+										return nil, err
+									}
+									stmts[idx] = stmtInsert
+								}
+								
+								for idx, c := range funcStmt {
+									funcInsert, err := parserStmt(c)
+									if err != nil {
+										return nil, err
+									}
+									funcs[idx] = funcInsert
+								}
+								
+								for _, e := range exprs {
+									stats = append(stats, &ast.ExprStmt{
+										X: e,
+									})
+								}
+								
+								for _, e := range stmts {
+									stats = append(stats, e)
+								}
+								
+								// Invoke addStmtAdReturn to complete return code.
+								err = addStmtAsReturn(t, funcs)
 								if err != nil {
 									return nil, err
 								}
-								exprs[idx] = exprInsert
-							}
-							
-							for idx, c := range deferStmt {
-								stmtInsert, err := parserStmt(c)
-								if err != nil {
-									return nil, err
+								
+								stats = append(stats, t.Body.List...)
+								if len(stats) > 0 {
+									addId = append(addId, id)
 								}
-								stmts[idx] = stmtInsert
 							}
 							
-							for idx, c := range funcStmt {
-								funcInsert, err := parserStmt(c)
-								if err != nil {
-									return nil, err
-								}
-								funcs[idx] = funcInsert
-							}
-							
-							for _, e := range exprs {
-								stats = append(stats, &ast.ExprStmt{
-									X: e,
-								})
-							}
-							
-							for _, e := range stmts {
-								stats = append(stats, e)
-							}
-							
-							// Invoke addStmtAdReturn to complete return code.
-							err = addStmtAsReturn(t, funcs)
-							if err != nil {
-								return nil, err
-							}
-							
-							stats = append(stats, t.Body.List...)
-							if len(stats) > 0 {
-								addId = append(addId, id)
-							}
+							t.Body.List = stats
 						}
-						
-						t.Body.List = stats
 					}
 					
 				}

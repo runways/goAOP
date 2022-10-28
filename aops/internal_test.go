@@ -203,6 +203,7 @@ func Test_AddCode(t *testing.T) {
 			wantModify: map[string][]string{
 				"../unitTests/test.go": []string{
 					"@middleware-a",
+					"@middleware-b",
 					"@middleware-return",
 				},
 			},
@@ -228,6 +229,7 @@ func Test_AddCode(t *testing.T) {
 			wantModify: map[string][]string{
 				"../unitTests/test.go": []string{
 					"@middleware-a",
+					"@middleware-b",
 					"@middleware-return",
 				},
 			},
@@ -251,6 +253,7 @@ func Test_AddCode(t *testing.T) {
 			wantModify: map[string][]string{
 				"../unitTests/test.go": []string{
 					"@middleware-a",
+					"@middleware-b",
 					"@middleware-return",
 				},
 			},
@@ -274,6 +277,7 @@ func Test_AddCode(t *testing.T) {
 			wantModify: map[string][]string{
 				"../unitTests/test.go": []string{
 					"@middleware-a",
+					"@middleware-b",
 					"@middleware-return",
 				},
 			},
@@ -295,6 +299,7 @@ func Test_AddCode(t *testing.T) {
 			wantModify: map[string][]string{
 				"../unitTests/test.go": []string{
 					"@middleware-a",
+					"@middleware-b",
 					"@middleware-return",
 				},
 			},
@@ -318,8 +323,8 @@ func Test_AddCode(t *testing.T) {
 				},
 				"@middleware-b": {
 					FunStmt: []string{
-						`func(){fmt.Println("add middleware-b by addCode once")}()`,
-						`func(){fmt.Println("add by addCode twice")}()`,
+						`func(){fmt.Println("middleware-b add middleware-b by addCode once")}()`,
+						`func(){fmt.Println("middleware-b add by addCode twice")}()`,
 					},
 					DeferStmt: []string{
 						`defer func(){fmt.Println("middleware-b add by addCode")}()`,

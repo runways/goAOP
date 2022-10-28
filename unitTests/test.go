@@ -11,6 +11,8 @@ type FirstStruct struct {
 
 // InvokeFirstFunction
 // @middleware-a
+// @middleware-b
+// @middleware-return
 func (fs FirstStruct) InvokeFirstFunction() string {
 	fmt.Println("---> fs.InvokeFirstFunction")
 	return ""
