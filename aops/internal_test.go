@@ -154,7 +154,7 @@ func Test_AddCode(t *testing.T) {
 		return true
 	}, parser.ParseComments)
 	
-	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}})
+	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}, "@middleware-return": {}})
 	
 	type args struct {
 		pkgs    map[string][]fun
@@ -167,6 +167,46 @@ func Test_AddCode(t *testing.T) {
 		wantErr    bool
 		wantModify map[string][]string
 	}{
+		{
+			name: "normal add return code",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: pkgs, stmt: map[string]StmtParams{
+				"@middleware-a": {
+					FunStmt: []string{
+						`func(){fmt.Println("add by addCode")}()`,
+					},
+					DeferStmt: []string{
+						`defer func(){fmt.Println("add by addCode")}()`,
+					},
+					FunVarStmt: []string{
+						`if 1>0 {
+	fmt.Println("add by addCode")
+}`,
+					},
+					Packs: nil,
+				},
+				"@middleware-return": {
+					FunStmt:   nil,
+					DeferStmt: nil,
+					FunVarStmt: []string{
+						`if 1>0 {
+	fmt.Println("add by addCode")
+}`,
+					},
+					Packs: nil,
+				},
+			}, replace: false},
+			wantErr: false,
+			wantModify: map[string][]string{
+				"../unitTests/test.go": []string{
+					"@middleware-a",
+					"@middleware-return",
+				},
+			},
+		},
 		{
 			name: "normal add code",
 			args: struct {
@@ -188,6 +228,7 @@ func Test_AddCode(t *testing.T) {
 			wantModify: map[string][]string{
 				"../unitTests/test.go": []string{
 					"@middleware-a",
+					"@middleware-return",
 				},
 			},
 		},
@@ -210,6 +251,7 @@ func Test_AddCode(t *testing.T) {
 			wantModify: map[string][]string{
 				"../unitTests/test.go": []string{
 					"@middleware-a",
+					"@middleware-return",
 				},
 			},
 		},
@@ -232,6 +274,7 @@ func Test_AddCode(t *testing.T) {
 			wantModify: map[string][]string{
 				"../unitTests/test.go": []string{
 					"@middleware-a",
+					"@middleware-return",
 				},
 			},
 		},
@@ -252,6 +295,7 @@ func Test_AddCode(t *testing.T) {
 			wantModify: map[string][]string{
 				"../unitTests/test.go": []string{
 					"@middleware-a",
+					"@middleware-return",
 				},
 			},
 		},
@@ -288,6 +332,7 @@ func Test_AddCode(t *testing.T) {
 				"../unitTests/test.go": []string{
 					"@middleware-a",
 					"@middleware-b",
+					"@middleware-return",
 				},
 			},
 		},

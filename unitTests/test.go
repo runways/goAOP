@@ -20,6 +20,14 @@ func (fs FirstStruct) InvokeSecondFunction() string {
 	return ""
 }
 
+// InvokeThirdFunction
+// @middleware-return
+func (fs FirstStruct) InvokeThirdFunction() func() {
+	return func() {
+		fmt.Println("InvokeThirdFunction end")
+	}
+}
+
 // InvokeFirstFunction a same name function, but not belongs any struct
 // @middleware-a
 func InvokeFirstFunction() {}

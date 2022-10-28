@@ -11,6 +11,7 @@ import (
 	"go/token"
 	"io/fs"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -198,6 +199,8 @@ func removeDuplicate(m map[string][]string) map[string][]string {
 		for v := range _m {
 			_ms = append(_ms, v)
 		}
+		
+		sort.Strings(_ms)
 		m[key] = _ms
 	}
 	return m
@@ -340,9 +343,12 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 							
 							funStmt := stmt[id].FunStmt
 							deferStmt := stmt[id].DeferStmt
+							funcStmt := stmt[id].FunVarStmt
 							
 							exprs := make([]ast.Expr, len(funStmt))
 							stmts := make([]ast.Stmt, len(deferStmt))
+							funcs := make([]ast.Stmt, len(funcStmt))
+							
 							for idx, c := range funStmt {
 								exprInsert, err := parser.ParseExpr(c)
 								if err != nil {
@@ -359,6 +365,14 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 								stmts[idx] = stmtInsert
 							}
 							
+							for idx, c := range funcStmt {
+								funcInsert, err := parserStmt(c)
+								if err != nil {
+									return nil, err
+								}
+								funcs[idx] = funcInsert
+							}
+							
 							for _, e := range exprs {
 								stats = append(stats, &ast.ExprStmt{
 									X: e,
@@ -367,6 +381,12 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 							
 							for _, e := range stmts {
 								stats = append(stats, e)
+							}
+							
+							// Invoke addStmtAdReturn to complete return code.
+							err = addStmtAsReturn(t, funcs)
+							if err != nil {
+								return nil, err
 							}
 							
 							stats = append(stats, t.Body.List...)
@@ -407,4 +427,38 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 	}
 	
 	return removeDuplicate(modify), nil
+}
+
+// addStmtAsReturn check whether this function has a func variable as return data.
+// If it has function as return, then add pre-defined code. Otherwise, fallthrough.
+func addStmtAsReturn(t *ast.FuncDecl, fun []ast.Stmt) error {
+	if len(t.Body.List) > 0 {
+		for _, _f := range t.Body.List {
+			rf, ok := _f.(*ast.ReturnStmt)
+			if ok {
+				//	One function only has one return stmt block. So no need check twice.
+				return _addFuncCode(rf, fun)
+			}
+		}
+	}
+	
+	return nil
+}
+
+func _addFuncCode(t *ast.ReturnStmt, exprs []ast.Stmt) error {
+	
+	for _, returnFunc := range t.Results {
+		rf, ok := returnFunc.(*ast.FuncLit)
+		if ok && len(rf.Body.List) > 0 {
+			stats := make([]ast.Stmt, 0, len(rf.Body.List)+len(exprs))
+			for _, e := range exprs {
+				stats = append(stats, e)
+			}
+			
+			stats = append(stats, rf.Body.List...)
+			rf.Body.List = stats
+		}
+	}
+	
+	return nil
 }
