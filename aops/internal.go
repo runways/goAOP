@@ -32,7 +32,7 @@ func ParseDir(dir string, filter func(info fs.FileInfo) bool) (map[string]*ast.P
 			return true
 		}
 	}
-	
+
 	return parser.ParseDir(token.NewFileSet(), dir, filter, parser.ParseComments)
 }
 
@@ -44,14 +44,14 @@ func getIntersection(arr []string, ids map[string]struct{}) []string {
 	if len(arr) == 0 {
 		return nil
 	}
-	
+
 	var result []string
 	for _, a := range arr {
 		if _, exist := ids[a]; exist {
 			result = append(result, a)
 		}
 	}
-	
+
 	return result
 }
 
@@ -76,7 +76,7 @@ func extractIdFromComment(comment string) []string {
 			}
 		}
 	}
-	
+
 	return result
 }
 
@@ -88,7 +88,7 @@ func extractIdFromComment(comment string) []string {
 // name, value is a function name array.
 func Position(pkgs map[string]*ast.Package, ids map[string]struct{}) map[string][]fun {
 	result := make(map[string][]fun)
-	
+
 	for _, pack := range pkgs {
 		for name, f := range pack.Files {
 			if strings.HasSuffix(name, "_test.go") {
@@ -102,7 +102,7 @@ func Position(pkgs map[string]*ast.Package, ids map[string]struct{}) map[string]
 						for _, c := range t.Doc.List {
 							// get all valid AOP ids from comment
 							_ids := extractIdFromComment(c.Text)
-							
+
 							validId := getIntersection(_ids, ids)
 							if len(validId) > 0 {
 								if t.Recv == nil ||
@@ -121,7 +121,7 @@ func Position(pkgs map[string]*ast.Package, ids map[string]struct{}) map[string]
 									})
 								}
 							}
-							
+
 						}
 					}
 				}
@@ -131,7 +131,7 @@ func Position(pkgs map[string]*ast.Package, ids map[string]struct{}) map[string]
 			}
 		}
 	}
-	
+
 	return result
 }
 
@@ -164,15 +164,15 @@ func isEqual(fd *ast.FuncDecl, fn fun) bool {
 	if fd.Recv != nil && len(fd.Recv.List) > 0 && fn.owner != "" {
 		return fd.Recv.List[0].Type.(*ast.Ident).Name == fn.owner && fd.Name.String() == fn.name
 	}
-	
+
 	if fd.Recv == nil && fn.owner == "" {
 		return fd.Name.String() == fn.name
 	}
-	
+
 	if fd.Recv != nil && fn.owner == "" {
 		return false
 	}
-	
+
 	return false
 }
 
@@ -182,7 +182,7 @@ func fullId(t *ast.FuncDecl) string {
 	if t.Recv != nil && len(t.Recv.List) > 0 {
 		r = t.Recv.List[0].Type.(*ast.Ident).Name
 	}
-	
+
 	return fmt.Sprintf("%s-%s", name, r)
 }
 
@@ -195,11 +195,11 @@ func removeDuplicate(m map[string][]string) map[string][]string {
 		for _, v := range val {
 			_m[v] = struct{}{}
 		}
-		
+
 		for v := range _m {
 			_ms = append(_ms, v)
 		}
-		
+
 		sort.Strings(_ms)
 		m[key] = _ms
 	}
@@ -210,16 +210,16 @@ func parserImport(p Pack) (impor []ast.Spec, err error) {
 	comment := fmt.Sprintf(`package main
 import %s %s
 `, p.Name, p.Path)
-	
+
 	f, err := parser.ParseFile(token.NewFileSet(), "", comment, parser.ImportsOnly)
 	if err != nil {
 		return
 	}
-	
+
 	if len(f.Decls) == 0 {
 		return nil, fmt.Errorf("import parser failed. please verify Pack[%s %s] whether valid. ", p.Name, p.Path)
 	}
-	
+
 	return f.Decls[0].(*ast.GenDecl).Specs, nil
 }
 
@@ -237,13 +237,13 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 		if !exist {
 			continue
 		}
-		
+
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, name, nil, parser.ParseComments)
 		if err != nil {
 			return err
 		}
-		
+
 		decls := make([]ast.Decl, 0, len(f.Decls))
 		for _, decl := range f.Decls {
 			switch t := decl.(type) {
@@ -254,7 +254,7 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 					decls = append(decls, t)
 					continue
 				}
-				
+
 				for _, i := range aopIds {
 					for _, p := range stmt[i].Packs {
 						impor, err := parserImport(p)
@@ -264,7 +264,7 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 						stats = append(stats, impor...)
 					}
 				}
-				
+
 				stats = append(stats, t.Specs...)
 				t.Specs = stats
 				decls = append(decls, t)
@@ -273,19 +273,19 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 			}
 		}
 		f.Decls = decls
-		
+
 		cfg := printer.Config{
 			Mode: printer.UseSpaces,
 		}
 		var buf bytes.Buffer
-		
+
 		cfg.Fprint(&buf, fset, f)
-		
+
 		dest, err := format.Source(buf.Bytes())
 		if err != nil {
 			return err
 		}
-		
+
 		if replace {
 			os.WriteFile(name, dest, 0777)
 		} else {
@@ -318,16 +318,16 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (map[string][]string, error) {
 	modify := make(map[string][]string)
 	for name, funs := range pkgs {
-		
+
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, name, nil, parser.ParseComments)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		fm := make(map[string][]fun)
 		var addId []string
-		
+
 		for _, n := range funs {
 			ns, exist := fm[fmt.Sprintf("%s-%s", n.name, n.owner)]
 			if exist {
@@ -336,9 +336,9 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 			} else {
 				fm[fmt.Sprintf("%s-%s", n.name, n.owner)] = []fun{n}
 			}
-			
+
 		}
-		
+
 		decls := make([]ast.Decl, 0, len(f.Decls))
 		for _, decl := range f.Decls {
 			switch t := decl.(type) {
@@ -348,15 +348,15 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 						if isEqual(t, fn) {
 							var stats []ast.Stmt
 							for _, id := range fn.aopIds {
-								
+
 								funStmt := stmt[id].FunStmt
 								deferStmt := stmt[id].DeferStmt
 								funcStmt := stmt[id].FunVarStmt
-								
+
 								exprs := make([]ast.Expr, len(funStmt))
 								stmts := make([]ast.Stmt, len(deferStmt))
 								funcs := make([]ast.Stmt, len(funcStmt))
-								
+
 								for idx, c := range funStmt {
 									exprInsert, err := parser.ParseExpr(c)
 									if err != nil {
@@ -364,7 +364,7 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 									}
 									exprs[idx] = exprInsert
 								}
-								
+
 								for idx, c := range deferStmt {
 									stmtInsert, err := parserStmt(c)
 									if err != nil {
@@ -372,7 +372,7 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 									}
 									stmts[idx] = stmtInsert
 								}
-								
+
 								for idx, c := range funcStmt {
 									funcInsert, err := parserStmt(c)
 									if err != nil {
@@ -380,33 +380,38 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 									}
 									funcs[idx] = funcInsert
 								}
-								
+
 								for _, e := range exprs {
 									stats = append(stats, &ast.ExprStmt{
 										X: e,
 									})
 								}
-								
+
 								for _, e := range stmts {
 									stats = append(stats, e)
 								}
-								
+
 								// Invoke addStmtAdReturn to complete return code.
 								err = addStmtAsReturn(t, funcs)
 								if err != nil {
 									return nil, err
 								}
-								
+
+								err = addStmtBindVar(t, stmt[id].DeclStmt)
+								if err != nil {
+									return nil, err
+								}
+
 								stats = append(stats, t.Body.List...)
 								if len(stats) > 0 {
 									addId = append(addId, id)
 								}
 							}
-							
+
 							t.Body.List = stats
 						}
 					}
-					
+
 				}
 				decls = append(decls, t)
 			default:
@@ -414,28 +419,97 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 			}
 		}
 		f.Decls = decls
-		
+
 		cfg := printer.Config{
 			Mode: printer.UseSpaces,
 		}
 		var buf bytes.Buffer
-		
+
 		cfg.Fprint(&buf, fset, f)
-		
+
 		dest, err := format.Source(buf.Bytes())
 		if err != nil {
 			return nil, err
 		}
+
 		if replace {
 			os.WriteFile(name, dest, 0777)
 		} else {
 			fmt.Println(string(dest))
+
 		}
-		
+
 		modify[name] = addId
 	}
-	
+
 	return removeDuplicate(modify), nil
+}
+
+// addStmtBindVar insert declare stmt behind specify variable.
+// If v is nil, then do nothing.
+// If v is not nil, then try to find the position of variable that
+// ident by v[0].Name. Then insert all stmt that stores in v[0].Stmt.
+// Return nil if there occur any unexpected error.
+func addStmtBindVar(t *ast.FuncDecl, v []DeclParams) error {
+	if len(v) == 0 {
+		return nil
+	}
+
+	dp := v[0]
+
+	var _stmt []ast.Stmt
+	var _stmtBlock []ast.Stmt
+
+	// convert string slice to ast.Stmt
+	for _, s := range dp.Stmt {
+		_s, err := parserStmt(s)
+		if err != nil {
+			return err
+		}
+
+		_stmtBlock = append(_stmtBlock, _s)
+	}
+
+	jump := false
+
+	for _, body := range t.Body.List {
+		as, ok := body.(*ast.AssignStmt)
+		if ok {
+			// jump == true means stmt block has inserted complete.
+			// So ignore surplus stmts.
+			if jump {
+				_stmt = append(_stmt, body)
+				continue
+			}
+
+			// check whether is the variable that we are finding.
+			// x,y := 1, "ff"
+			// lhs    rhs
+			for _, lhs := range as.Lhs {
+				if ident, ok := lhs.(*ast.Ident); ok {
+					if ident.Name == dp.VarName &&
+						!jump {
+						//	I find dp.VarName position. Then insert all stmt behind it.
+						_stmt = append(_stmt, body)
+						_stmt = append(_stmt, _stmtBlock...)
+						jump = true
+					}
+				}
+			}
+
+			// The variable is not we are finding, so ignore it.
+			if !jump {
+				_stmt = append(_stmt, body)
+			}
+		} else {
+			_stmt = append(_stmt, body)
+		}
+	}
+	if len(_stmt) > 0 {
+		t.Body.List = _stmt
+	}
+
+	return nil
 }
 
 // addStmtAsReturn check whether this function has a func variable as return data.
@@ -450,12 +524,12 @@ func addStmtAsReturn(t *ast.FuncDecl, fun []ast.Stmt) error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
 func _addFuncCode(t *ast.ReturnStmt, exprs []ast.Stmt) error {
-	
+
 	for _, returnFunc := range t.Results {
 		rf, ok := returnFunc.(*ast.FuncLit)
 		if ok && len(rf.Body.List) > 0 {
@@ -463,11 +537,11 @@ func _addFuncCode(t *ast.ReturnStmt, exprs []ast.Stmt) error {
 			for _, e := range exprs {
 				stats = append(stats, e)
 			}
-			
+
 			stats = append(stats, rf.Body.List...)
 			rf.Body.List = stats
 		}
 	}
-	
+
 	return nil
 }

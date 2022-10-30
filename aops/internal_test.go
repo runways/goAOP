@@ -72,12 +72,12 @@ func Test_parserStmt(t *testing.T) {
 }
 
 func Test_Position(t *testing.T) {
-	
+
 	pkg, _ := parser.ParseDir(token.NewFileSet(), "../unitTests", func(info fs.FileInfo) bool {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-	
+
 	type args struct {
 		pkgs map[string]*ast.Package
 		id   map[string]struct{}
@@ -153,9 +153,9 @@ func Test_AddCode(t *testing.T) {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-	
+
 	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}, "@middleware-return": {}})
-	
+
 	type args struct {
 		pkgs    map[string][]fun
 		stmt    map[string]StmtParams
@@ -506,9 +506,9 @@ func TestAddImport(t *testing.T) {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-	
+
 	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}})
-	
+
 	type args struct {
 		pkgs    map[string][]fun
 		stmt    map[string]StmtParams
@@ -553,6 +553,246 @@ func TestAddImport(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := AddImport(tt.args.pkgs, tt.args.stmt, tt.args.modify, tt.args.replace); (err != nil) != tt.wantErr {
 				t.Errorf("AddImport() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestAddCode(t *testing.T) {
+
+	pkg, _ := parser.ParseDir(token.NewFileSet(), "../cases/insert-code-behind-variable", func(info fs.FileInfo) bool {
+		//	ignore all logic check
+		return true
+	}, parser.ParseComments)
+
+	pkgs := Position(pkg, map[string]struct{}{"@middleware-err": {}})
+
+	type args struct {
+		pkgs    map[string][]fun
+		stmt    map[string]StmtParams
+		replace bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string][]string
+		wantErr bool
+	}{
+		{
+			name: "Normal test",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: pkgs, stmt: map[string]StmtParams{
+				"@middleware-err": {
+					DeclStmt: []DeclParams{
+						{
+							VarName: "err",
+							Stmt: []string{
+								`
+	defer func(err error) {
+		if err != nil {
+			fmt.Println("err not nil")
+		} else {
+			fmt.Println("err is nil")
+		}
+	}(err)
+`,
+							},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-code-behind-variable/test.go": []string{
+					"@middleware-err",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Has same variables, insert correct position test",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-code-behind-variable/test.go": []fun{
+					{
+						owner: "FirstStruct",
+						name:  "invokeSecondFunction",
+						aopIds: []string{
+							"@middleware-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-err": {
+					DeclStmt: []DeclParams{
+						{
+							VarName: "err",
+							Stmt: []string{
+								`
+	defer func(err error) {
+		if err != nil {
+			fmt.Println("err not nil")
+		} else {
+			fmt.Println("err is nil")
+		}
+	}(err)
+`,
+							},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-code-behind-variable/test.go": []string{
+					"@middleware-err",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Has two kinds function insert correct position in no receiver fun",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-code-behind-variable/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeThreeFunction",
+						aopIds: []string{
+							"@middleware-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-err": {
+					DeclStmt: []DeclParams{
+						{
+							VarName: "err",
+							Stmt: []string{
+								`
+	defer func(err error) {
+		if err != nil {
+			fmt.Println("err not nil")
+		} else {
+			fmt.Println("err is nil")
+		}
+	}(err)
+`,
+							},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-code-behind-variable/test.go": []string{
+					"@middleware-err",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Insert correct position in no receiver fun as return type",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-code-behind-variable/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeFourFunction",
+						aopIds: []string{
+							"@middleware-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-err": {
+					DeclStmt: []DeclParams{
+						{
+							VarName: "err",
+							Stmt: []string{
+								`
+	defer func(err error) {
+		if err != nil {
+			fmt.Println("err not nil")
+		} else {
+			fmt.Println("err is nil")
+		}
+	}(err)
+`,
+							},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-code-behind-variable/test.go": []string{
+					"@middleware-err",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Insert correct position in no receiver fun with return fun",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-code-behind-variable/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeFiveFunction",
+						aopIds: []string{
+							"@middleware-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-err": {
+					DeclStmt: []DeclParams{
+						{
+							VarName: "err",
+							Stmt: []string{
+								`
+	defer func(err error) {
+		if err != nil {
+			fmt.Println("err not nil")
+		} else {
+			fmt.Println("err is nil")
+		}
+	}(err)
+`,
+							},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-code-behind-variable/test.go": []string{
+					"@middleware-err",
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := AddCode(tt.args.pkgs, tt.args.stmt, tt.args.replace)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AddCode() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AddCode() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
