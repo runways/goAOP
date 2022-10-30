@@ -11,6 +11,8 @@ type FirstStruct struct {
 
 // InvokeFirstFunction
 // @middleware-a
+// @middleware-b
+// @middleware-return
 func (fs FirstStruct) InvokeFirstFunction() string {
 	fmt.Println("---> fs.InvokeFirstFunction")
 	return ""
@@ -18,6 +20,14 @@ func (fs FirstStruct) InvokeFirstFunction() string {
 
 func (fs FirstStruct) InvokeSecondFunction() string {
 	return ""
+}
+
+// InvokeThirdFunction
+// @middleware-return
+func (fs FirstStruct) InvokeThirdFunction() func() {
+	return func() {
+		fmt.Println("InvokeThirdFunction end")
+	}
 }
 
 // InvokeFirstFunction a same name function, but not belongs any struct
