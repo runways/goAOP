@@ -12,38 +12,34 @@ import "go/ast"
 
 // addFuncWithoutDependsOperator Insert expr that in the fun list to source code by order.
 func addFuncWithoutDependsOperator(t *ast.FuncDecl, fun []ast.Expr) error {
-	if len(t.Body.List) > 0 {
-		var stats []ast.Stmt
-		for _, e := range fun {
-			stats = append(stats, &ast.ExprStmt{
-				X: e,
-			})
-		}
-		
-		stats = append(stats, t.Body.List...)
-		t.Body.List = stats
+	var stats []ast.Stmt
+	for _, e := range fun {
+		stats = append(stats, &ast.ExprStmt{
+			X: e,
+		})
 	}
+	
+	stats = append(stats, t.Body.List...)
+	t.Body.List = stats
 	
 	return nil
 }
 
 // addDeferWithoutVarOperator Insert stmt ignore any variable depend.
 func addDeferWithoutVarOperator(t *ast.FuncDecl, def []ast.Stmt) error {
-	if len(t.Body.List) > 0 {
-		var stats []ast.Stmt
-		for _, e := range def {
-			stats = append(stats, e)
-		}
-		
-		stats = append(stats, t.Body.List...)
-		t.Body.List = stats
+	var stats []ast.Stmt
+	for _, e := range def {
+		stats = append(stats, e)
 	}
+	
+	stats = append(stats, t.Body.List...)
+	t.Body.List = stats
 	
 	return nil
 }
 
 func addStmtAsFuncWithVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend []string) error {
-	if len(t.Body.List) > 0 && len(depend) > 0 {
+	if len(depend) > 0 {
 		return addStmtBlockBindVarOperator(t, []DeclParams{
 			{
 				VarName: depend[0],
@@ -58,13 +54,11 @@ func addStmtAsFuncWithVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend []stri
 // addStmtAsReturn check whether this function has a func variable as return data.
 // If it has function as return, then add pre-defined code. Otherwise, fallthrough.
 func addStmtAsReturnOperator(t *ast.FuncDecl, fun []ast.Stmt) error {
-	if len(t.Body.List) > 0 {
-		for _, _f := range t.Body.List {
-			rf, ok := _f.(*ast.ReturnStmt)
-			if ok {
-				//	One function only has one return stmt block. So no need check twice.
-				return _addFuncCode(rf, fun)
-			}
+	for _, _f := range t.Body.List {
+		rf, ok := _f.(*ast.ReturnStmt)
+		if ok {
+			//	One function only has one return stmt block. So no need check twice.
+			return _addFuncCode(rf, fun)
 		}
 	}
 	
