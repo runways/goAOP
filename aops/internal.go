@@ -30,7 +30,7 @@ func ParseDir(dir string, filter func(info fs.FileInfo) bool) (map[string]*ast.P
 			return true
 		}
 	}
-	
+
 	return parser.ParseDir(token.NewFileSet(), dir, filter, parser.ParseComments)
 }
 
@@ -42,7 +42,7 @@ func ParseDir(dir string, filter func(info fs.FileInfo) bool) (map[string]*ast.P
 // name, value is a function name array.
 func Position(pkgs map[string]*ast.Package, ids map[string]struct{}) map[string][]fun {
 	result := make(map[string][]fun)
-	
+
 	for _, pack := range pkgs {
 		for name, f := range pack.Files {
 			if strings.HasSuffix(name, "_test.go") {
@@ -56,7 +56,7 @@ func Position(pkgs map[string]*ast.Package, ids map[string]struct{}) map[string]
 						for _, c := range t.Doc.List {
 							// get all valid AOP ids from comment
 							_ids := extractIdFromComment(c.Text)
-							
+
 							validId := getIntersection(_ids, ids)
 							if len(validId) > 0 {
 								if t.Recv == nil ||
@@ -75,7 +75,7 @@ func Position(pkgs map[string]*ast.Package, ids map[string]struct{}) map[string]
 									})
 								}
 							}
-							
+
 						}
 					}
 				}
@@ -85,7 +85,7 @@ func Position(pkgs map[string]*ast.Package, ids map[string]struct{}) map[string]
 			}
 		}
 	}
-	
+
 	return result
 }
 
@@ -103,13 +103,13 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 		if !exist {
 			continue
 		}
-		
+
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, name, nil, parser.ParseComments)
 		if err != nil {
 			return err
 		}
-		
+
 		decls := make([]ast.Decl, 0, len(f.Decls))
 		for _, decl := range f.Decls {
 			switch t := decl.(type) {
@@ -120,7 +120,7 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 					decls = append(decls, t)
 					continue
 				}
-				
+
 				for _, i := range aopIds {
 					for _, p := range stmt[i].Packs {
 						impor, err := parserImport(p)
@@ -130,7 +130,7 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 						stats = append(stats, impor...)
 					}
 				}
-				
+
 				stats = append(stats, t.Specs...)
 				t.Specs = stats
 				decls = append(decls, t)
@@ -139,19 +139,19 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 			}
 		}
 		f.Decls = decls
-		
+
 		cfg := printer.Config{
 			Mode: printer.UseSpaces,
 		}
 		var buf bytes.Buffer
-		
+
 		cfg.Fprint(&buf, fset, f)
-		
+
 		dest, err := format.Source(buf.Bytes())
 		if err != nil {
 			return err
 		}
-		
+
 		if replace {
 			os.WriteFile(name, dest, 0777)
 		} else {
@@ -168,32 +168,24 @@ func AddImport(pkgs map[string][]fun, stmt map[string]StmtParams, modify map[str
 // stmt is a map, that save function declare, key is aop id.
 // stmtParams save the AOP stmt params. There are some things need attentions.
 //
-// First,in the FunStmt. A simple `fun` declare does not have any effect, e.g. `func(){ fmt.Println() }`.
-// If wants to execute this function, invoke function at the end, like `func(){}()`
-//
-// Second, DeferStmt also is a string slice, that save defer function declare, e.g. `defer func(){}()`.
-// When use deferStmt, please keep deferStmt valid.
-//
-// At last, Packs save the import data. Maybe user has import the same package, so named a unique name
-// for repeat is a good idea.
-//
-// When adding code, it will add funStmt first, and add deferStmt by follow.
+// Typically, in the StmtParams, `DeclStmt` and `Pack` can nil. But Stmts cannot be empty.
+// Stmts save different OperationKind stmts. More detail info please reference StmtParam usage in types.go.
 //
 // Replace used to indicate replace source file or not. If replace == true, it replaces at the end.
 // Otherwise, it will not.
 func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (map[string][]string, error) {
 	modify := make(map[string][]string)
 	for name, funs := range pkgs {
-		
+
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, name, nil, parser.ParseComments)
 		if err != nil {
 			return nil, err
 		}
-		
+
 		fm := make(map[string][]fun)
 		var addId []string
-		
+
 		for _, n := range funs {
 			ns, exist := fm[fmt.Sprintf("%s-%s", n.name, n.owner)]
 			if exist {
@@ -202,9 +194,9 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 			} else {
 				fm[fmt.Sprintf("%s-%s", n.name, n.owner)] = []fun{n}
 			}
-			
+
 		}
-		
+
 		decls := make([]ast.Decl, 0, len(f.Decls))
 		for _, decl := range f.Decls {
 			switch t := decl.(type) {
@@ -214,81 +206,49 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 						if isEqual(t, fn) {
 							var stats []ast.Stmt
 							for _, id := range fn.aopIds {
-								
-								//funStmt := stmt[id].FunStmt
-								//deferStmt := stmt[id].DeferStmt
-								//funcStmt := stmt[id].FunVarStmt
-								
-								//exprs := make([]ast.Expr, len(funStmt))
-								//stmts := make([]ast.Stmt, len(deferStmt))
-								//funcs := make([]ast.Stmt, len(funcStmt))
-								
-								//for idx, c := range funStmt {
-								//	exprInsert, err := parser.ParseExpr(c)
-								//	if err != nil {
-								//		return nil, err
-								//	}
-								//	exprs[idx] = exprInsert
-								//}
-								
+
 								exprs, err := getAddFuncWithoutDependsStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}
-								
-								//for idx, c := range deferStmt {
-								//	stmtInsert, err := parserStmt(c)
-								//	if err != nil {
-								//		return nil, err
-								//	}
-								//	stmts[idx] = stmtInsert
-								//}
+
 								stmts, err := getDeferFuncStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}
-								
+
 								funcs, depends, err := getFuncStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}
-								
+
 								rets, err := getReturnFuncWithoutVarStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}
-								
+
 								retVars, retDepends, err := getReturnFuncWithVarStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}
-								//for idx, c := range funcStmt {
-								//	funcInsert, err := parserStmt(c)
-								//	if err != nil {
-								//		return nil, err
-								//	}
-								//	funcs[idx] = funcInsert
-								//}
-								
-								//for _, e := range exprs {
-								//	stats = append(stats, &ast.ExprStmt{
-								//		X: e,
-								//	})
-								//}
-								
-								addFuncWithoutDependsOperator(t, exprs)
-								addDeferWithoutVarOperator(t, stmts)
-								addStmtAsFuncWithVarOperator(t, funcs, depends)
-								//for _, e := range stmts {
-								//	stats = append(stats, e)
-								//}
-								
-								// Invoke addStmtAdReturn to complete return code.
+
+								err = addFuncWithoutDependsOperator(t, exprs)
+								if err != nil {
+									return nil, err
+								}
+								err = addDeferWithoutVarOperator(t, stmts)
+								if err != nil {
+									return nil, err
+								}
+								err = addStmtAsFuncWithVarOperator(t, funcs, depends)
+								if err != nil {
+									return nil, err
+								}
 								err = addStmtAsReturnOperator(t, rets)
 								if err != nil {
 									return nil, err
 								}
-								
+
 								err = addReturnWithBindVarOperator(t, retVars, retDepends)
 								if err != nil {
 									return nil, err
@@ -297,17 +257,17 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 								if err != nil {
 									return nil, err
 								}
-								
+
 								stats = append(stats, t.Body.List...)
 								if len(stats) > 0 {
 									addId = append(addId, id)
 								}
 							}
-							
+
 							t.Body.List = stats
 						}
 					}
-					
+
 				}
 				decls = append(decls, t)
 			default:
@@ -315,28 +275,28 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 			}
 		}
 		f.Decls = decls
-		
+
 		cfg := printer.Config{
 			Mode: printer.UseSpaces,
 		}
 		var buf bytes.Buffer
-		
+
 		cfg.Fprint(&buf, fset, f)
-		
+
 		dest, err := format.Source(buf.Bytes())
 		if err != nil {
 			return nil, err
 		}
-		
+
 		if replace {
 			os.WriteFile(name, dest, 0777)
 		} else {
 			fmt.Println(string(dest))
-			
+
 		}
-		
+
 		modify[name] = addId
 	}
-	
+
 	return removeDuplicate(modify), nil
 }
