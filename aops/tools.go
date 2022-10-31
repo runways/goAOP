@@ -33,6 +33,16 @@ func getReturnFuncWithoutVarStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
 	return getStmt(sp.Stmts, AddReturnFuncWithoutVarStmt)
 }
 
+func getReturnFuncWithVarStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
+	for _, s := range sp.Stmts {
+		if s.Kind == AddReturnFuncWithVarStmt {
+			stmts, err := getStmt(sp.Stmts, AddReturnFuncWithVarStmt)
+			return stmts, s.Depends, err
+		}
+	}
+	
+	return
+}
 func getFuncStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
 	for _, s := range sp.Stmts {
 		if s.Kind == AddFuncWithVarStmt {

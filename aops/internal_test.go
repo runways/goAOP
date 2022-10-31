@@ -864,3 +864,157 @@ func TestAddCode(t *testing.T) {
 		})
 	}
 }
+
+func TestReturnWithVar(t *testing.T) {
+	type args struct {
+		pkgs    map[string][]fun
+		stmt    map[string]StmtParams
+		replace bool
+	}
+	
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string][]string
+		wantErr bool
+	}{
+		{
+			name: "Insert code in return func with specify variables in params list",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-return-func-with-var/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeFourFunction",
+						aopIds: []string{
+							"@middleware-return-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-return-err": {
+					Stmts: []StmtParam{
+						
+						{
+							Kind: AddReturnFuncWithVarStmt,
+							Stmt: []string{
+								`if err != nil {
+										fmt.Println("err in this return func not nil")
+									} else {
+										fmt.Println("err in this return func is nil")
+									}
+								`,
+							},
+							Depends: []string{"err"},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-return-func-with-var/test.go": []string{
+					"@middleware-return-err",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Insert code in return func with specify variables in body",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-return-func-with-var/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeFiveFunction",
+						aopIds: []string{
+							"@middleware-return-err-body",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-return-err-body": {
+					Stmts: []StmtParam{
+						
+						{
+							Kind: AddReturnFuncWithVarStmt,
+							Stmt: []string{
+								`if err != nil {
+										fmt.Println("err in this return func not nil")
+									} else {
+										fmt.Println("err in this return func is nil")
+									}
+								`,
+							},
+							Depends: []string{"err"},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-return-func-with-var/test.go": []string{
+					"@middleware-return-err-body",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Mixed scene",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-return-func-with-var/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeSixFunction",
+						aopIds: []string{
+							"@middleware-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-err": {
+					Stmts: []StmtParam{
+						
+						{
+							Kind: AddReturnFuncWithVarStmt,
+							Stmt: []string{
+								`if err != nil {
+										fmt.Println("err in params")
+									} else {
+										fmt.Println("err in params is nil")
+									}
+								`,
+							},
+							Depends: []string{"err"},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-return-func-with-var/test.go": []string{
+					"@middleware-err",
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := AddCode(tt.args.pkgs, tt.args.stmt, tt.args.replace)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestReturnWithVar() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TestReturnWithVar() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

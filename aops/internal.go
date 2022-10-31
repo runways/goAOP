@@ -257,6 +257,11 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 								if err != nil {
 									return nil, err
 								}
+								
+								retVars, retDepends, err := getReturnFuncWithVarStmt(stmt[id])
+								if err != nil {
+									return nil, err
+								}
 								//for idx, c := range funcStmt {
 								//	funcInsert, err := parserStmt(c)
 								//	if err != nil {
@@ -284,6 +289,10 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 									return nil, err
 								}
 								
+								err = addReturnWithBindVarOperator(t, retVars, retDepends)
+								if err != nil {
+									return nil, err
+								}
 								err = addStmtBindVarOperator(t, stmt[id].DeclStmt)
 								if err != nil {
 									return nil, err

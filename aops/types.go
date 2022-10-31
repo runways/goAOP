@@ -33,10 +33,10 @@ type OperationKind int
 type StmtParams struct {
 	//FunStmt    []string
 	//DeferStmt  []string
-	FunVarStmt []string
-	DeclStmt   []DeclParams
-	Stmts      []StmtParam
-	Packs      []Pack
+	//FunVarStmt []string
+	DeclStmt []DeclParams
+	Stmts    []StmtParam
+	Packs    []Pack
 }
 
 type Pack struct {

@@ -6,6 +6,7 @@ const (
 	AddDeferFuncWithVarStmt
 	AddFuncWithVarStmt
 	AddReturnFuncWithoutVarStmt
+	AddReturnFuncWithVarStmt
 )
 
 const (
@@ -14,6 +15,7 @@ const (
 	AddDeferFuncStmtStr            = "add-defer-func"
 	AddDeferFuncWithVarStmtStr     = "add-defer-func-with-var-depend"
 	AddReturnFuncWithoutVarStmtStr = "add-return-func-without-var"
+	AddReturnFuncWithVarStmtStr    = "add-return-func-with-var"
 )
 
 //var stmtKindExecuteOrder = []int{
