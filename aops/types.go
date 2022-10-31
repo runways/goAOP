@@ -1,5 +1,7 @@
 package aops
 
+type OperationKind int
+
 // StmtParams The stmt will insert into function body.
 // FunStmt declares stander func stmt, e.g. func(){xxxx}()
 // DeferStmt declares some stmt in defer block. e.g. defer func(){xxxx}()
@@ -29,10 +31,11 @@ package aops
 // the same variable. For example, the previous stmt bind err is valid. If there has other stmt bind
 // x(new variable). We can not find different variable at the same time, so we can not insert stmt right.
 type StmtParams struct {
-	FunStmt    []string
-	DeferStmt  []string
+	//FunStmt    []string
+	//DeferStmt  []string
 	FunVarStmt []string
 	DeclStmt   []DeclParams
+	Stmts      []StmtParam
 	Packs      []Pack
 }
 
@@ -45,4 +48,29 @@ type Pack struct {
 type DeclParams struct {
 	VarName string
 	Stmt    []string
+}
+
+// StmtParam store the metadata of stmt.
+// Kind decides to how and where to insert stmt.
+// Stmt is the string of stmt, use parseStmt before use these.
+// Depends are the dependence conditions
+type StmtParam struct {
+	Kind    OperationKind
+	Stmt    []string
+	Depends []string
+}
+
+type StmtDepend interface {
+	Depend() []string
+}
+
+// StmtVarDepend Variable dependency condition.
+// VarName are all the variable string names.
+// AOP will find all the variable init complete position
+type StmtVarDepend struct {
+	VarName []string
+}
+
+func (sd StmtVarDepend) Depend() []string {
+	return sd.VarName
 }
