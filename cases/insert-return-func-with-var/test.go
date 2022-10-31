@@ -10,7 +10,7 @@ type FirstStruct struct {
 // invokeFirstFunction
 // @middleware-err
 func (fs FirstStruct) invokeFirstFunction() {
-	
+
 	err := fmt.Errorf("a pre-defind error")
 	fmt.Println(err.Error())
 }
@@ -18,7 +18,7 @@ func (fs FirstStruct) invokeFirstFunction() {
 // invokeSecondFunction
 // @middleware-err
 func (fs FirstStruct) invokeSecondFunction() {
-	
+
 	err := fmt.Errorf("a pre-defind error")
 	err = fmt.Errorf("New error ")
 	fmt.Println(err.Error())
@@ -37,7 +37,7 @@ func invokeThreeFunction() {
 func invokeFourFunction() func(err2 error) {
 	err := fmt.Errorf("a pre-defind error")
 	err = fmt.Errorf("New error ")
-	
+
 	if err != nil {
 	}
 	return func(err error) {
@@ -53,7 +53,7 @@ func invokeFiveFunction() func() {
 		str := "hello world"
 		err := fmt.Errorf("a pre-defind error")
 		err = fmt.Errorf("New error ")
-		
+
 		if err != nil {
 			fmt.Println(str)
 		}
@@ -67,9 +67,17 @@ func invokeSixFunction() func(error) {
 		str := "hello world"
 		err = fmt.Errorf("a pre-defind error")
 		err = fmt.Errorf("New error ")
-		
+
 		if err != nil {
 			fmt.Println(str)
 		}
+	}
+}
+
+// invokeSevenFunction
+// @middleware-func-var-err
+func invokeSevenFunction() func(e func(error)) {
+	return func(e func(error)) {
+		e(fmt.Errorf("a func with error params"))
 	}
 }

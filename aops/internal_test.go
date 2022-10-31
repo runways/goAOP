@@ -72,12 +72,12 @@ func Test_parserStmt(t *testing.T) {
 }
 
 func Test_Position(t *testing.T) {
-	
+
 	pkg, _ := parser.ParseDir(token.NewFileSet(), "../unitTests", func(info fs.FileInfo) bool {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-	
+
 	type args struct {
 		pkgs map[string]*ast.Package
 		id   map[string]struct{}
@@ -153,9 +153,9 @@ func Test_AddCode(t *testing.T) {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-	
+
 	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}, "@middleware-return": {}})
-	
+
 	type args struct {
 		pkgs    map[string][]fun
 		stmt    map[string]StmtParams
@@ -579,9 +579,9 @@ func TestAddImport(t *testing.T) {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-	
+
 	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}})
-	
+
 	type args struct {
 		pkgs    map[string][]fun
 		stmt    map[string]StmtParams
@@ -626,14 +626,14 @@ func TestAddImport(t *testing.T) {
 }
 
 func TestAddCode(t *testing.T) {
-	
+
 	pkg, _ := parser.ParseDir(token.NewFileSet(), "../cases/insert-code-behind-variable", func(info fs.FileInfo) bool {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-	
+
 	pkgs := Position(pkg, map[string]struct{}{"@middleware-err": {}})
-	
+
 	type args struct {
 		pkgs    map[string][]fun
 		stmt    map[string]StmtParams
@@ -871,7 +871,7 @@ func TestReturnWithVar(t *testing.T) {
 		stmt    map[string]StmtParams
 		replace bool
 	}
-	
+
 	tests := []struct {
 		name    string
 		args    args
@@ -897,7 +897,7 @@ func TestReturnWithVar(t *testing.T) {
 			}, stmt: map[string]StmtParams{
 				"@middleware-return-err": {
 					Stmts: []StmtParam{
-						
+
 						{
 							Kind: AddReturnFuncWithVarStmt,
 							Stmt: []string{
@@ -939,7 +939,7 @@ func TestReturnWithVar(t *testing.T) {
 			}, stmt: map[string]StmtParams{
 				"@middleware-return-err-body": {
 					Stmts: []StmtParam{
-						
+
 						{
 							Kind: AddReturnFuncWithVarStmt,
 							Stmt: []string{
@@ -963,6 +963,48 @@ func TestReturnWithVar(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Use func as variable",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-return-func-with-var/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeSevenFunction",
+						aopIds: []string{
+							"@middleware-func-var-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-func-var-err": {
+					Stmts: []StmtParam{
+
+						{
+							Kind: AddReturnFuncWithVarStmt,
+							Stmt: []string{
+								`if e != nil {
+										fmt.Println("e func in params")
+									} else {
+										fmt.Println("e func in params is nil")
+									}
+								`,
+							},
+							Depends: []string{"e"},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-return-func-with-var/test.go": []string{
+					"@middleware-func-var-err",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Mixed scene",
 			args: struct {
 				pkgs    map[string][]fun
@@ -981,7 +1023,7 @@ func TestReturnWithVar(t *testing.T) {
 			}, stmt: map[string]StmtParams{
 				"@middleware-err": {
 					Stmts: []StmtParam{
-						
+
 						{
 							Kind: AddReturnFuncWithVarStmt,
 							Stmt: []string{

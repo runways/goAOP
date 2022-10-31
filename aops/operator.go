@@ -11,8 +11,10 @@ import "go/ast"
 // 5. addReturnWithBindVarOperator
 // 6. addStmtBindVarOperator
 
-// addReturnWithBindVarOperator Find the return function, then insert code in that function.
-// This function usage please reference `cases/insert-return-func-with-var` and `unitTests/test.go`
+// addReturnWithBindVarOperator Find the return function, then insert code in target function.
+// The variable depend on contains basic type, like int, string, error etc. Also, support function type,
+// like that func(e func()), the e is a func variable.
+// Detail usage please reference `cases/insert-return-func-with-var` and `unitTests/test.go`
 func addReturnWithBindVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend []string) error {
 	for _, _f := range t.Body.List {
 		switch t := _f.(type) {
