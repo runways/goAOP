@@ -175,26 +175,56 @@ func Test_AddCode(t *testing.T) {
 				replace bool
 			}{pkgs: pkgs, stmt: map[string]StmtParams{
 				"@middleware-a": {
-					FunStmt: []string{
-						`func(){fmt.Println("add by addCode")}()`,
-					},
-					DeferStmt: []string{
-						`defer func(){fmt.Println("add by addCode")}()`,
-					},
-					FunVarStmt: []string{
-						`if 1>0 {
-	fmt.Println("add by addCode")
-}`,
+					//FunStmt: []string{
+					//	`func(){fmt.Println("add funcStmt by addCode")}()`,
+					//},
+					//DeferStmt: []string{
+					//	`defer func(){fmt.Println("add by addCode")}()`,
+					//},
+					//					FunVarStmt: []string{
+					//						`if 1>0 {
+					//	fmt.Println("add by addCode")
+					//}`,
+					//					},
+					Stmts: []StmtParam{
+						{
+							Kind: AddFuncWithoutDepends,
+							Stmt: []string{
+								`func(){fmt.Println("add funcStmt by addCode")}()`,
+							},
+							Depends: nil,
+						},
+						{
+							Kind: AddDeferFuncStmt,
+							Stmt: []string{
+								`defer func(){fmt.Println("add defer func by addCode")}()`,
+							},
+							Depends: nil,
+						},
+						{
+							Kind: AddFuncWithVarStmt,
+							Stmt: []string{
+								`if 1>0 {
+									fmt.Println("add a var func by addCode")
+								}`,
+							},
+							Depends: []string{
+								"x",
+							},
+						},
 					},
 					Packs: nil,
 				},
 				"@middleware-return": {
-					FunStmt:   nil,
-					DeferStmt: nil,
-					FunVarStmt: []string{
-						`if 1>0 {
-	fmt.Println("add by addCode")
-}`,
+					Stmts: []StmtParam{
+						{
+							Kind: AddReturnFuncWithoutVarStmt,
+							Stmt: []string{
+								`if 1>0 {
+									fmt.Println("add a return func by addCode")
+								}`,
+							},
+						},
 					},
 					Packs: nil,
 				},
@@ -216,11 +246,21 @@ func Test_AddCode(t *testing.T) {
 				replace bool
 			}{pkgs: pkgs, stmt: map[string]StmtParams{
 				"@middleware-a": {
-					FunStmt: []string{
-						`func(){fmt.Println("add by addCode")}()`,
-					},
-					DeferStmt: []string{
-						`defer func(){fmt.Println("add by addCode")}()`,
+					Stmts: []StmtParam{
+						{
+							Kind: AddFuncWithoutDepends,
+							Stmt: []string{
+								`func(){fmt.Println("add by addCode")}()`,
+							},
+							Depends: nil,
+						},
+						{
+							Kind: AddDeferFuncStmt,
+							Stmt: []string{
+								`defer func(){fmt.Println("add by addCode")}()`,
+							},
+							Depends: nil,
+						},
 					},
 					Packs: nil,
 				},
@@ -242,11 +282,16 @@ func Test_AddCode(t *testing.T) {
 				replace bool
 			}{pkgs: pkgs, stmt: map[string]StmtParams{
 				"@middleware-a": {
-					FunStmt: []string{
-						`func(){fmt.Println("add by addCode")}()`,
+					Stmts: []StmtParam{
+						{
+							Kind: AddFuncWithoutDepends,
+							Stmt: []string{
+								`func(){fmt.Println("add by addCode")}()`,
+							},
+							Depends: nil,
+						},
 					},
-					DeferStmt: []string{},
-					Packs:     nil,
+					Packs: nil,
 				},
 			}, replace: false},
 			wantErr: false,
@@ -266,9 +311,14 @@ func Test_AddCode(t *testing.T) {
 				replace bool
 			}{pkgs: pkgs, stmt: map[string]StmtParams{
 				"@middleware-a": {
-					FunStmt: []string{},
-					DeferStmt: []string{
-						`defer func(){fmt.Println("add by addCode")}()`,
+					Stmts: []StmtParam{
+						{
+							Kind: AddDeferFuncStmt,
+							Stmt: []string{
+								`defer func(){fmt.Println("add by addCode")}()`,
+							},
+							Depends: nil,
+						},
 					},
 					Packs: nil,
 				},
@@ -289,11 +339,7 @@ func Test_AddCode(t *testing.T) {
 				stmt    map[string]StmtParams
 				replace bool
 			}{pkgs: pkgs, stmt: map[string]StmtParams{
-				"@middleware-a": {
-					FunStmt:   []string{},
-					DeferStmt: []string{},
-					Packs:     nil,
-				},
+				"@middleware-a": {},
 			}, replace: false},
 			wantErr: false,
 			wantModify: map[string][]string{
@@ -312,22 +358,40 @@ func Test_AddCode(t *testing.T) {
 				replace bool
 			}{pkgs: pkgs, stmt: map[string]StmtParams{
 				"@middleware-a": {
-					FunStmt: []string{
-						`func(){fmt.Println("add by addCode once")}()`,
-						`func(){fmt.Println("add by addCode twice")}()`,
-					},
-					DeferStmt: []string{
-						`defer func(){fmt.Println("add by addCode")}()`,
+					Stmts: []StmtParam{
+						{
+							Kind: AddFuncWithoutDepends,
+							Stmt: []string{
+								`func(){fmt.Println("add by addCode once")}()`,
+								`func(){fmt.Println("add by addCode twice")}()`,
+							},
+						},
+						{
+							Kind: AddDeferFuncStmt,
+							Stmt: []string{
+								`defer func(){fmt.Println("add  defer by addCode")}()`,
+							},
+							Depends: nil,
+						},
 					},
 					Packs: nil,
 				},
 				"@middleware-b": {
-					FunStmt: []string{
-						`func(){fmt.Println("middleware-b add middleware-b by addCode once")}()`,
-						`func(){fmt.Println("middleware-b add by addCode twice")}()`,
-					},
-					DeferStmt: []string{
-						`defer func(){fmt.Println("middleware-b add by addCode")}()`,
+					Stmts: []StmtParam{
+						{
+							Kind: AddFuncWithoutDepends,
+							Stmt: []string{
+								`func(){fmt.Println("middleware-b add middleware-b by addCode once")}()`,
+								`func(){fmt.Println("middleware-b add by addCode twice")}()`,
+							},
+						},
+						{
+							Kind: AddDeferFuncStmt,
+							Stmt: []string{
+								`defer func(){fmt.Println("middleware-b add by addCode")}()`,
+							},
+							Depends: nil,
+						},
 					},
 					Packs: nil,
 				},
@@ -349,12 +413,21 @@ func Test_AddCode(t *testing.T) {
 				replace bool
 			}{pkgs: pkgs, stmt: map[string]StmtParams{
 				"@middleware-a": {
-					FunStmt: []string{
-						`func(){fmt.Println("add by addCode once")}()`,
-						`func(){fmt.Println("add by addCode twice")}()`,
-					},
-					DeferStmt: []string{
-						`fmt.Println("add by addCode"`,
+					Stmts: []StmtParam{
+						{
+							Kind: AddFuncWithoutDepends,
+							Stmt: []string{
+								`func(){fmt.Println("add by addCode once")}()`,
+								`func(){fmt.Println("add by addCode twice")}()`,
+							},
+						},
+						{
+							Kind: AddDeferFuncStmt,
+							Stmt: []string{
+								`fmt.Println("add by addCode"`,
+							},
+							Depends: nil,
+						},
 					},
 					Packs: nil,
 				},
@@ -529,12 +602,6 @@ func TestAddImport(t *testing.T) {
 				replace bool
 			}{pkgs: pkgs, stmt: map[string]StmtParams{
 				"@middleware-a": {
-					FunStmt: []string{
-						`func(){fmt.Println("add by addCode")}()`,
-					},
-					DeferStmt: []string{
-						`defer func(){fmt.Println("add by addCode")}()`,
-					},
 					Packs: []Pack{
 						{
 							Name: "f",
@@ -793,6 +860,202 @@ func TestAddCode(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("AddCode() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestReturnWithVar(t *testing.T) {
+	type args struct {
+		pkgs    map[string][]fun
+		stmt    map[string]StmtParams
+		replace bool
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string][]string
+		wantErr bool
+	}{
+		{
+			name: "Insert code in return func with specify variables in params list",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-return-func-with-var/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeFourFunction",
+						aopIds: []string{
+							"@middleware-return-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-return-err": {
+					Stmts: []StmtParam{
+
+						{
+							Kind: AddReturnFuncWithVarStmt,
+							Stmt: []string{
+								`if err != nil {
+										fmt.Println("err in this return func not nil")
+									} else {
+										fmt.Println("err in this return func is nil")
+									}
+								`,
+							},
+							Depends: []string{"err"},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-return-func-with-var/test.go": []string{
+					"@middleware-return-err",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Insert code in return func with specify variables in body",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-return-func-with-var/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeFiveFunction",
+						aopIds: []string{
+							"@middleware-return-err-body",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-return-err-body": {
+					Stmts: []StmtParam{
+
+						{
+							Kind: AddReturnFuncWithVarStmt,
+							Stmt: []string{
+								`if err != nil {
+										fmt.Println("err in this return func not nil")
+									} else {
+										fmt.Println("err in this return func is nil")
+									}
+								`,
+							},
+							Depends: []string{"err"},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-return-func-with-var/test.go": []string{
+					"@middleware-return-err-body",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Use func as variable",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-return-func-with-var/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeSevenFunction",
+						aopIds: []string{
+							"@middleware-func-var-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-func-var-err": {
+					Stmts: []StmtParam{
+
+						{
+							Kind: AddReturnFuncWithVarStmt,
+							Stmt: []string{
+								`if e != nil {
+										fmt.Println("e func in params")
+									} else {
+										fmt.Println("e func in params is nil")
+									}
+								`,
+							},
+							Depends: []string{"e"},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-return-func-with-var/test.go": []string{
+					"@middleware-func-var-err",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Mixed scene",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/insert-return-func-with-var/test.go": []fun{
+					{
+						owner: "",
+						name:  "invokeSixFunction",
+						aopIds: []string{
+							"@middleware-err",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-err": {
+					Stmts: []StmtParam{
+
+						{
+							Kind: AddReturnFuncWithVarStmt,
+							Stmt: []string{
+								`if err != nil {
+										fmt.Println("err in params")
+									} else {
+										fmt.Println("err in params is nil")
+									}
+								`,
+							},
+							Depends: []string{"err"},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/insert-return-func-with-var/test.go": []string{
+					"@middleware-err",
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := AddCode(tt.args.pkgs, tt.args.stmt, tt.args.replace)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestReturnWithVar() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TestReturnWithVar() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

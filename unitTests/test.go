@@ -14,7 +14,11 @@ type FirstStruct struct {
 // @middleware-b
 // @middleware-return
 func (fs FirstStruct) InvokeFirstFunction() string {
-	fmt.Println("---> fs.InvokeFirstFunction")
+	x := "a pre-defind variable"
+	fmt.Println("---> fs.InvokeFirstFunction", x)
+	
+	// Since this function return a string, but it will not insert
+	// 'return code' although user use @middleware-return
 	return ""
 }
 
