@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/runways/goAOP/aops"
 	"os"
 	"reflect"
@@ -8,9 +9,27 @@ import (
 )
 
 func Test_parseConfig(t *testing.T) {
-	
-	f, _ := os.CreateTemp("", "")
-	os.WriteFile(f.Name(), []byte(`
+
+	subFile, _ := os.CreateTemp("", "")
+	os.WriteFile(subFile.Name(), []byte(`
+[[middleware]]
+    id="@middleware-b"
+	[[middleware.Stmt]]
+	kind="add-return-func-with-var"
+    code=["""func(){
+                log.Println("before")
+            }()"""]
+	depend=["err"]
+	[[middleware.Stmt]]
+	kind="add-return-func-without-var"
+    code =["""func(){
+                log.Println("before")
+            }()"""]
+	depend=["str"]
+`), 0777)
+
+	conf := fmt.Sprintf(`
+include=["%s"]
 [[middleware]]
     id="@middleware-a"
 	[[middleware.Stmt]]
@@ -29,8 +48,10 @@ func Test_parseConfig(t *testing.T) {
         name = "log"
         path = """"github.com/sirupsen/logrus""""
 
-`), 0777)
-	
+`, subFile.Name())
+	f, _ := os.CreateTemp("", "")
+	os.WriteFile(f.Name(), []byte(conf), 0777)
+
 	type args struct {
 		file string
 	}
@@ -44,7 +65,8 @@ func Test_parseConfig(t *testing.T) {
 			name: "Normal parse",
 			args: struct{ file string }{file: f.Name()},
 			wantC: Config{
-				MiddWare: []middleWare{
+				Include: []string{subFile.Name()},
+				MidWare: []middleWare{
 					{
 						ID: "@middleware-a",
 						Package: []pack{
@@ -68,7 +90,31 @@ func Test_parseConfig(t *testing.T) {
 						},
 					},
 				},
-				MiddWareMap: map[string]aops.StmtParams{
+				MidWareMap: map[string]aops.StmtParams{
+					"@middleware-b": aops.StmtParams{
+						DeclStmt: nil,
+						Stmts: []aops.StmtParam{
+							aops.StmtParam{
+								Kind: aops.AddReturnFuncWithVarStmt,
+								Stmt: []string{
+									`func(){
+                log.Println("before")
+            }()`,
+								},
+								Depends: []string{"err"},
+							},
+							aops.StmtParam{
+								Kind: aops.AddReturnFuncWithoutVarStmt,
+								Stmt: []string{
+									`func(){
+                log.Println("before")
+            }()`,
+								},
+								Depends: nil,
+							},
+						},
+						Packs: nil,
+					},
 					"@middleware-a": aops.StmtParams{
 						DeclStmt: nil,
 						Stmts: []aops.StmtParam{
