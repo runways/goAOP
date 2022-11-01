@@ -31,7 +31,7 @@ func main() {
 	}
 
 	aopMap := make(map[string]struct{})
-	for name := range c.MiddWareMap {
+	for name := range c.MidWareMap {
 		aopMap[name] = struct{}{}
 	}
 
@@ -44,7 +44,7 @@ func main() {
 		fmt.Println("=======>")
 	}
 
-	modify, err := aops.AddCode(pkgMap, c.MiddWareMap, *replace)
+	modify, err := aops.AddCode(pkgMap, c.MidWareMap, *replace)
 	if err != nil {
 		fmt.Println("FAILED")
 		fmt.Println(err.Error())
@@ -59,7 +59,7 @@ func main() {
 		fmt.Println("=======>")
 	}
 
-	err = aops.AddImport(pkgMap, c.MiddWareMap, modify, *replace)
+	err = aops.AddImport(pkgMap, c.MidWareMap, modify, *replace)
 	if err != nil {
 		fmt.Println("FAILED")
 		fmt.Println(err.Error())
@@ -78,5 +78,5 @@ func check() {
 }
 
 func outputConfig(c Config) {
-	fmt.Printf("%+v \n", c.MiddWare)
+	fmt.Printf("%+v \n", c.MidWare)
 }
