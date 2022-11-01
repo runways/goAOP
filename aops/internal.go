@@ -10,6 +10,8 @@ import (
 	"go/token"
 	"io/fs"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -21,6 +23,28 @@ type fun struct {
 
 const noReceiver = ""
 
+// fetchDir get all dirs which contains *.go files.
+func fetchDir(root string) (dirs []string, err error) {
+	dirFilter := make(map[string]interface{})
+	
+	filepath.Walk(root, func(path string, info fs.FileInfo, err error) error {
+		if strings.HasSuffix(path, ".go") {
+			p := filepath.Dir(path)
+			if _, exist := dirFilter[p]; !exist {
+				dirFilter[p] = struct{}{}
+			}
+		}
+		
+		return nil
+	})
+	
+	for key := range dirFilter {
+		dirs = append(dirs, key)
+	}
+	sort.Strings(dirs)
+	return dirs, nil
+}
+
 // ParseDir use `token.ParserDir` parser specify dir. And use `filter` for filter flile info at the same time
 // If filter is nil, it will pass all files as default.
 // When parse success, `ParseDir` will return a map save file name and package pointer. If failed, return a error
@@ -31,7 +55,23 @@ func ParseDir(dir string, filter func(info fs.FileInfo) bool) (map[string]*ast.P
 		}
 	}
 	
-	return parser.ParseDir(token.NewFileSet(), dir, filter, parser.ParseComments)
+	dirs, err := fetchDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	
+	m := make(map[string]*ast.Package)
+	for _, d := range dirs {
+		_m, err := parser.ParseDir(token.NewFileSet(), d, filter, parser.ParseComments)
+		if err != nil {
+			return nil, err
+		}
+		for key, value := range _m {
+			m[key] = value
+		}
+	}
+	
+	return m, nil
 }
 
 // Position Get all functions that need add AOP.
