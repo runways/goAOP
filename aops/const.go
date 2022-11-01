@@ -17,10 +17,3 @@ const (
 	AddReturnFuncWithoutVarStmtStr = "add-return-func-without-var"
 	AddReturnFuncWithVarStmtStr    = "add-return-func-with-var"
 )
-
-//var stmtKindExecuteOrder = []int{
-//	AddFuncWithoutDepends,
-//	AddFuncWithVarStmt,
-//	AddDeferFuncStmt,
-//	AddDeferFuncWithVarStmt,
-//}

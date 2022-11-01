@@ -1,31 +1,17 @@
 [[middleware]]
-    id="@middleware-a"
-    funcStmt=["""func(){
-                log.Println("before")
-            }()
-        """]
-    deferStmt=["""defer func(){
-                log.Println("defer")
-            }()
-        """]
+id="@middleware-a"
+    [[middleware.Stmt]]
+    kind="add-func-without-depends"
+    code=["""func(){
+                    log.Println("before")
+                }()"""]
+    depend=["err"]
+    [[middleware.Stmt]]
+    kind="add-func-with-var-depend"
+    code =["""func(){
+                    log.Println("before")
+                }()"""]
+    depend=["str"]
     [[middleware.package]]
-        name = "log"
-        path = """ "github.com/sirupsen/logrus" """
-
-[[middleware]]
-    id="@middleware-b"
-    funcStmt=["""func(){
-                    log.Println("middleware-b install")
-                }()
-            """]
-    deferStmt=["""defer func(){
-                    log.Println(time.Now())
-                    log.Println("middleware-b install")
-                }()
-            """]
-    [[middleware.package]]
-        name = "log"
-        path = """ "github.com/sirupsen/logrus" """
-    [[middleware.package]]
-        name = ""
-        path = """ "time" """
+    name = "log"
+    path = """ "github.com/sirupsen/logrus" """
