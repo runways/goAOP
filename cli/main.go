@@ -29,6 +29,13 @@ func main() {
 		os.Exit(-1)
 	}
 	
+	if *debug {
+		fmt.Println("Will handler bellow files:")
+		for key := range pkgs {
+			fmt.Println(key)
+		}
+		fmt.Println("=======>")
+	}
 	aopMap := make(map[string]struct{})
 	for name := range c.MiddWareMap {
 		aopMap[name] = struct{}{}
