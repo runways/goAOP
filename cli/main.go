@@ -21,6 +21,7 @@ func main() {
 
 	if *debug {
 		outputConfig(c)
+		fmt.Println("=======>")
 	}
 
 	pkgs, err := aops.ParseDir(*dir, nil)
