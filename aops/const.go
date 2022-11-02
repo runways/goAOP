@@ -7,13 +7,15 @@ const (
 	AddFuncWithVarStmt
 	AddReturnFuncWithoutVarStmt
 	AddReturnFuncWithVarStmt
+	AddFuncWithoutDependsWithInject
 )
 
 const (
-	AddFuncWithoutDependsStr       = "add-func-without-depends"
-	AddFuncWithVarStmtStr          = "add-func-with-var-depend"
-	AddDeferFuncStmtStr            = "add-defer-func"
-	AddDeferFuncWithVarStmtStr     = "add-defer-func-with-var-depend"
-	AddReturnFuncWithoutVarStmtStr = "add-return-func-without-var"
-	AddReturnFuncWithVarStmtStr    = "add-return-func-with-var"
+	AddFuncWithoutDependsStr           = "add-func-without-depends"
+	AddFuncWithVarStmtStr              = "add-func-with-var-depend"
+	AddFuncWithoutDependsWithInjectStr = "add-func-without-depends-with-injection"
+	AddDeferFuncStmtStr                = "add-defer-func"
+	AddDeferFuncWithVarStmtStr         = "add-defer-func-with-var-depend"
+	AddReturnFuncWithoutVarStmtStr     = "add-return-func-without-var"
+	AddReturnFuncWithVarStmtStr        = "add-return-func-with-var"
 )
