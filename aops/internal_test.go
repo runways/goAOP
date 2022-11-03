@@ -175,17 +175,6 @@ func Test_AddCode(t *testing.T) {
 				replace bool
 			}{pkgs: pkgs, stmt: map[string]StmtParams{
 				"@middleware-a": {
-					//FunStmt: []string{
-					//	`func(){fmt.Println("add funcStmt by addCode")}()`,
-					//},
-					//DeferStmt: []string{
-					//	`defer func(){fmt.Println("add by addCode")}()`,
-					//},
-					//					FunVarStmt: []string{
-					//						`if 1>0 {
-					//	fmt.Println("add by addCode")
-					//}`,
-					//					},
 					Stmts: []StmtParam{
 						{
 							Kind: AddFuncWithoutDepends,
@@ -508,6 +497,21 @@ func Test_getIntersection(t *testing.T) {
 		want []string
 	}{
 		{
+			name: "path test",
+			args: struct {
+				arr []string
+				ids map[string]struct{}
+			}{arr: []string{
+				"@middleware-a(path:\"xx\")",
+				"@middleware-b()",
+				"@middleware-c",
+			}, ids: map[string]struct{}{
+				"@middleware-a": struct {
+				}{},
+			}},
+			want: []string{"@middleware-a"},
+		},
+		{
 			name: "nil test",
 			args: struct {
 				arr []string
@@ -674,6 +678,231 @@ func TestAddCode(t *testing.T) {
 			want: map[string][]string{
 				"../cases/insert-code-behind-variable/test.go": []string{
 					"@middleware-err",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "A ID with default value param",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{
+				pkgs: map[string][]fun{
+					"../cases/case-01/code.go": []fun{
+						{
+							originIds: []string{
+								"@middleware-injection(path:\"\")",
+							},
+							owner: "FirstStruct",
+							name:  "invokeSecondFunctionWithInjection",
+							aopIds: []string{
+								"@middleware-injection",
+							},
+						},
+					},
+				},
+				stmt: map[string]StmtParams{
+					"@middleware-injection": {
+						Stmts: []StmtParam{
+							{
+								Kind: AddFuncWithoutDependsWithInject,
+								Stmt: []string{
+									`
+	fmt.Println("path: %s",path)
+`,
+								},
+								Depends: nil,
+							},
+						},
+					},
+				},
+				replace: false,
+			},
+			want: map[string][]string{
+				"../cases/case-01/code.go": []string{
+					"@middleware-injection",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "A ID with int param",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{
+				pkgs: map[string][]fun{
+					"../cases/case-01/code.go": []fun{
+						{
+							originIds: []string{
+								"@middleware-injection(path:100)",
+							},
+							owner: "FirstStruct",
+							name:  "invokeThirdFunctionWithInjection",
+							aopIds: []string{
+								"@middleware-injection",
+							},
+						},
+					},
+				},
+				stmt: map[string]StmtParams{
+					"@middleware-injection": {
+						Stmts: []StmtParam{
+							{
+								Kind: AddFuncWithoutDependsWithInject,
+								Stmt: []string{
+									`
+	fmt.Println("path: %v",path)
+`,
+								},
+								Depends: nil,
+							},
+						},
+					},
+				},
+				replace: false,
+			},
+			want: map[string][]string{
+				"../cases/case-01/code.go": []string{
+					"@middleware-injection",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "A ID with two params",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{
+				pkgs: map[string][]fun{
+					"../cases/case-01/code.go": []fun{
+						{
+							originIds: []string{
+								"@middleware-injection(path:100, name:\"a string param\")",
+							},
+							owner: "FirstStruct",
+							name:  "invokeFourFunctionWithInjection",
+							aopIds: []string{
+								"@middleware-injection",
+							},
+						},
+					},
+				},
+				stmt: map[string]StmtParams{
+					"@middleware-injection": {
+						Stmts: []StmtParam{
+							{
+								Kind: AddFuncWithoutDependsWithInject,
+								Stmt: []string{
+									`
+	fmt.Println("path: %v, name: %v",path, name)
+`,
+								},
+								Depends: nil,
+							},
+						},
+					},
+				},
+				replace: false,
+			},
+			want: map[string][]string{
+				"../cases/case-01/code.go": []string{
+					"@middleware-injection",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "A ID with param",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{
+				pkgs: map[string][]fun{
+					"../cases/case-01/code.go": []fun{
+						{
+							originIds: []string{
+								"@middleware-injection(path:\"/user/id\")",
+							},
+							owner: "FirstStruct",
+							name:  "invokeFunctionWithInjection",
+							aopIds: []string{
+								"@middleware-injection",
+							},
+						},
+					},
+				},
+				stmt: map[string]StmtParams{
+					"@middleware-injection": {
+						Stmts: []StmtParam{
+							{
+								Kind: AddFuncWithoutDependsWithInject,
+								Stmt: []string{
+									`
+	fmt.Println("path: %s",path)
+`,
+								},
+								Depends: nil,
+							},
+						},
+					},
+				},
+				replace: false,
+			},
+			want: map[string][]string{
+				"../cases/case-01/code.go": []string{
+					"@middleware-injection",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "A ID with inject param",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{
+				pkgs: map[string][]fun{
+					"../cases/case-01/code.go": []fun{
+						{
+							originIds: []string{
+								"@middleware-injection(path:100, name:\"a string param\", f:@inject)",
+							},
+							owner: "FirstStruct",
+							name:  "invokeFiveFunctionWithInjection",
+							aopIds: []string{
+								"@middleware-injection",
+							},
+						},
+					},
+				},
+				stmt: map[string]StmtParams{
+					"@middleware-injection": {
+						Stmts: []StmtParam{
+							{
+								Kind: AddFuncWithoutDependsWithInject,
+								Stmt: []string{
+									`
+	fmt.Println("path: %v, name: %v inject: %v",path, name, f)
+`,
+								},
+								Depends: nil,
+							},
+						},
+					},
+				},
+				replace: false,
+			},
+			want: map[string][]string{
+				"../cases/case-01/code.go": []string{
+					"@middleware-injection",
 				},
 			},
 			wantErr: false,

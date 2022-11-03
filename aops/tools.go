@@ -2,6 +2,7 @@ package aops
 
 import (
 	"fmt"
+	zs "github.com/andy-zhangtao/gogather/strings"
 	"go/ast"
 	"go/parser"
 	"go/scanner"
@@ -10,18 +11,75 @@ import (
 	"strings"
 )
 
-func getAddFuncWithoutDependsStmt(sp StmtParams) (expr []ast.Expr, err error) {
+type injectDetail struct {
+	owner string
+	name  string
+}
+
+func (ij injectDetail) getAddFuncWithoutDependsStmt(sp StmtParams, id string) (stmt []ast.Stmt, expr []ast.Expr, err error) {
 	for _, s := range sp.Stmts {
 		switch s.Kind {
 		case AddFuncWithoutDepends:
-			return getExprsFromStmt(s.Stmt)
+			expr, err = getExprsFromStmt(s.Stmt)
+			return nil, expr, err
+		case AddFuncWithoutDependsWithInject:
+			//	parser the id param, and declare these params
+			params, err := ij.getParamsFromID(id)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			paramStmt, err := getStmtsFromStmt(params)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			expr, err = getExprsFromStmt(s.Stmt)
+			return paramStmt, expr, err
 		}
 	}
-	
+
 	return
 }
 
-func getDeferFuncStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
+func (ij injectDetail) getParamsFromID(id string) ([]string, error) {
+	var params []string
+	paths, err := zs.SymExstact(id, "(", ")")
+	if err != nil {
+		return nil, err
+	}
+
+	_paths := strings.Split(paths[0], ",")
+	for _, p := range _paths {
+		_p := strings.Split(p, ":")
+		if len(_p) == 2 {
+			params = append(params, ij.getVariableDeclare(_p))
+		}
+	}
+
+	return params, nil
+}
+
+func (ij injectDetail) getVariableDeclare(id []string) string {
+	val := strings.TrimSpace(id[1])
+	switch val {
+	case aopInjectLabel:
+		return fmt.Sprintf("%s := %v", strings.TrimSpace(id[0]), ij._getAOPInjectLabel())
+	default:
+		return fmt.Sprintf("%s := %v", strings.TrimSpace(id[0]), val)
+	}
+}
+
+func (ij injectDetail) _getAOPInjectLabel() string {
+	str := `inject.AOPLabel{
+		Name:  "%s",
+		Owner: "%s",
+	}`
+
+	return fmt.Sprintf(str, ij.name, ij.owner)
+}
+
+func (ij injectDetail) getDeferFuncStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
 	return getStmt(sp.Stmts, AddDeferFuncStmt)
 }
 
@@ -29,28 +87,28 @@ func getDeferWithVarFuncStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
 	return getStmt(sp.Stmts, AddDeferFuncWithVarStmt)
 }
 
-func getReturnFuncWithoutVarStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
+func (ij injectDetail) getReturnFuncWithoutVarStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
 	return getStmt(sp.Stmts, AddReturnFuncWithoutVarStmt)
 }
 
-func getReturnFuncWithVarStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
+func (ij injectDetail) getReturnFuncWithVarStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
 	for _, s := range sp.Stmts {
 		if s.Kind == AddReturnFuncWithVarStmt {
 			stmts, err := getStmt(sp.Stmts, AddReturnFuncWithVarStmt)
 			return stmts, s.Depends, err
 		}
 	}
-	
+
 	return
 }
-func getFuncStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
+func (ij injectDetail) getFuncStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
 	for _, s := range sp.Stmts {
 		if s.Kind == AddFuncWithVarStmt {
 			stmts, err := getStmt(sp.Stmts, s.Kind)
 			return stmts, s.Depends, err
 		}
 	}
-	
+
 	return
 }
 
@@ -60,7 +118,7 @@ func getStmt(stmt []StmtParam, id OperationKind) (stmts []ast.Stmt, err error) {
 			return getStmtsFromStmt(s.Stmt)
 		}
 	}
-	
+
 	return nil, nil
 }
 
@@ -71,10 +129,10 @@ func getStmtsFromStmt(stmt []string) (stmts []ast.Stmt, err error) {
 		if err != nil {
 			return nil, err
 		}
-		
+
 		stmts = append(stmts, s)
 	}
-	
+
 	return stmts, nil
 }
 
@@ -85,11 +143,24 @@ func getExprsFromStmt(stmt []string) (expr []ast.Expr, err error) {
 		if err != nil {
 			return nil, err
 		}
-		
+
 		expr = append(expr, exp)
 	}
-	
+
 	return
+}
+
+// extractFuncName get function name. Since we support specify params in AOP id, like
+// that: @middleware-c(path:"xxx").  The path allow has different value. So we can't
+// use `@middleware-c(path:"xxx")` as function name.
+// Then use extractFuncName get the name which except `()`
+func extractFuncName(name string) string {
+	if strings.Contains(name, "(") {
+		_name := strings.Split(name, "(")
+		return _name[0]
+	}
+
+	return name
 }
 
 // getIntersection get intersection from string array and AOP id map.
@@ -100,14 +171,14 @@ func getIntersection(arr []string, ids map[string]struct{}) []string {
 	if len(arr) == 0 {
 		return nil
 	}
-	
+
 	var result []string
 	for _, a := range arr {
-		if _, exist := ids[a]; exist {
-			result = append(result, a)
+		if _, exist := ids[extractFuncName(a)]; exist {
+			result = append(result, extractFuncName(a))
 		}
 	}
-	
+
 	return result
 }
 
@@ -132,7 +203,7 @@ func extractIdFromComment(comment string) []string {
 			}
 		}
 	}
-	
+
 	return result
 }
 
@@ -165,15 +236,15 @@ func isEqual(fd *ast.FuncDecl, fn fun) bool {
 	if fd.Recv != nil && len(fd.Recv.List) > 0 && fn.owner != "" {
 		return fd.Recv.List[0].Type.(*ast.Ident).Name == fn.owner && fd.Name.String() == fn.name
 	}
-	
+
 	if fd.Recv == nil && fn.owner == "" {
 		return fd.Name.String() == fn.name
 	}
-	
+
 	if fd.Recv != nil && fn.owner == "" {
 		return false
 	}
-	
+
 	return false
 }
 
@@ -183,7 +254,7 @@ func fullId(t *ast.FuncDecl) string {
 	if t.Recv != nil && len(t.Recv.List) > 0 {
 		r = t.Recv.List[0].Type.(*ast.Ident).Name
 	}
-	
+
 	return fmt.Sprintf("%s-%s", name, r)
 }
 
@@ -196,11 +267,11 @@ func removeDuplicate(m map[string][]string) map[string][]string {
 		for _, v := range val {
 			_m[v] = struct{}{}
 		}
-		
+
 		for v := range _m {
 			_ms = append(_ms, v)
 		}
-		
+
 		sort.Strings(_ms)
 		m[key] = _ms
 	}
@@ -211,15 +282,15 @@ func parserImport(p Pack) (impor []ast.Spec, err error) {
 	comment := fmt.Sprintf(`package main
 import %s %s
 `, p.Name, p.Path)
-	
+
 	f, err := parser.ParseFile(token.NewFileSet(), "", comment, parser.ImportsOnly)
 	if err != nil {
 		return
 	}
-	
+
 	if len(f.Decls) == 0 {
 		return nil, fmt.Errorf("import parser failed. please verify Pack[%s %s] whether valid. ", p.Name, p.Path)
 	}
-	
+
 	return f.Decls[0].(*ast.GenDecl).Specs, nil
 }

@@ -23,10 +23,10 @@ func addReturnWithBindVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend []stri
 				return _addFuncCodeWithVar(t, def, depend)
 				//case
 			}
-			
+
 		}
 	}
-	
+
 	return nil
 }
 
@@ -38,10 +38,10 @@ func addFuncWithoutDependsOperator(t *ast.FuncDecl, fun []ast.Expr) error {
 			X: e,
 		})
 	}
-	
+
 	stats = append(stats, t.Body.List...)
 	t.Body.List = stats
-	
+
 	return nil
 }
 
@@ -51,10 +51,23 @@ func addDeferWithoutVarOperator(t *ast.FuncDecl, def []ast.Stmt) error {
 	for _, e := range def {
 		stats = append(stats, e)
 	}
-	
+
 	stats = append(stats, t.Body.List...)
 	t.Body.List = stats
-	
+
+	return nil
+}
+
+// addStmtAsFuncWithoutVarOperator Insert stmt without depends on variable.
+func addStmtAsFuncWithoutVarOperator(t *ast.FuncDecl, def []ast.Stmt) error {
+	var stats []ast.Stmt
+	for _, e := range def {
+		stats = append(stats, e)
+	}
+
+	stats = append(stats, t.Body.List...)
+	t.Body.List = stats
+
 	return nil
 }
 
@@ -69,7 +82,7 @@ func addStmtAsFuncWithVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend []stri
 			},
 		}, def)
 	}
-	
+
 	return nil
 }
 
@@ -83,7 +96,7 @@ func addStmtAsReturnOperator(t *ast.FuncDecl, fun []ast.Stmt) error {
 			return _addFuncCode(rf, fun)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -106,7 +119,7 @@ func _addFuncCodeWithVar(t *ast.ReturnStmt, exprs []ast.Stmt, depend []string) e
 					}
 				}
 			}
-			
+
 			if !findPosition {
 				//	Try to find variable in body
 				jump := false
@@ -120,7 +133,7 @@ func _addFuncCodeWithVar(t *ast.ReturnStmt, exprs []ast.Stmt, depend []string) e
 							_stmt = append(_stmt, body)
 							continue
 						}
-						
+
 						// check whether is the variable that we are finding.
 						// x,y := 1, "ff"
 						// lhs    rhs
@@ -135,7 +148,7 @@ func _addFuncCodeWithVar(t *ast.ReturnStmt, exprs []ast.Stmt, depend []string) e
 								}
 							}
 						}
-						
+
 						// The variable is not we are finding, so ignore it.
 						if !jump {
 							_stmt = append(_stmt, body)
@@ -172,26 +185,26 @@ func _addFuncCodeWithVar(t *ast.ReturnStmt, exprs []ast.Stmt, depend []string) e
 				rf.Body.List = _stmt
 				return nil
 			}
-			
+
 			// Find variable in params list, so insert code in body.
 			stats := make([]ast.Stmt, 0, len(rf.Body.List)+len(exprs))
-			
+
 			for _, e := range exprs {
 				stats = append(stats, e)
 			}
-			
+
 			stats = append(stats, rf.Body.List...)
 			rf.Body.List = stats
 		}
 	}
-	
+
 	return nil
 }
 
 // _addFuncCode Insert all exprs in the head of return function body. The difference from _addFuncCodeWithVar
 // is that this function no binding any variable. So _addFuncCode fit the closure scene.
 func _addFuncCode(t *ast.ReturnStmt, exprs []ast.Stmt) error {
-	
+
 	for _, returnFunc := range t.Results {
 		rf, ok := returnFunc.(*ast.FuncLit)
 		if ok {
@@ -200,12 +213,12 @@ func _addFuncCode(t *ast.ReturnStmt, exprs []ast.Stmt) error {
 			for _, e := range exprs {
 				stats = append(stats, e)
 			}
-			
+
 			stats = append(stats, rf.Body.List...)
 			rf.Body.List = stats
 		}
 	}
-	
+
 	return nil
 }
 
@@ -215,14 +228,14 @@ func addStmtBlockBindVarOperator(t *ast.FuncDecl, v []DeclParams, stmt []ast.Stm
 	if len(v) == 0 {
 		return nil
 	}
-	
+
 	dp := v[0]
-	
+
 	var _stmt []ast.Stmt
 	var _stmtBlock []ast.Stmt = stmt
-	
+
 	jump := false
-	
+
 	for _, body := range t.Body.List {
 		as, ok := body.(*ast.AssignStmt)
 		if ok {
@@ -232,7 +245,7 @@ func addStmtBlockBindVarOperator(t *ast.FuncDecl, v []DeclParams, stmt []ast.Stm
 				_stmt = append(_stmt, body)
 				continue
 			}
-			
+
 			// check whether is the variable that we are finding.
 			// x,y := 1, "ff"
 			// lhs    rhs
@@ -247,7 +260,7 @@ func addStmtBlockBindVarOperator(t *ast.FuncDecl, v []DeclParams, stmt []ast.Stm
 					}
 				}
 			}
-			
+
 			// The variable is not we are finding, so ignore it.
 			if !jump {
 				_stmt = append(_stmt, body)
@@ -259,7 +272,7 @@ func addStmtBlockBindVarOperator(t *ast.FuncDecl, v []DeclParams, stmt []ast.Stm
 	if len(_stmt) > 0 {
 		t.Body.List = _stmt
 	}
-	
+
 	return nil
 }
 
@@ -272,24 +285,24 @@ func addStmtBindVarOperator(t *ast.FuncDecl, v []DeclParams) error {
 	if len(v) == 0 {
 		return nil
 	}
-	
+
 	dp := v[0]
-	
+
 	var _stmt []ast.Stmt
 	var _stmtBlock []ast.Stmt
-	
+
 	// convert string slice to ast.Stmt
 	for _, s := range dp.Stmt {
 		_s, err := parserStmt(s)
 		if err != nil {
 			return err
 		}
-		
+
 		_stmtBlock = append(_stmtBlock, _s)
 	}
-	
+
 	jump := false
-	
+
 	for _, body := range t.Body.List {
 		as, ok := body.(*ast.AssignStmt)
 		if ok {
@@ -299,7 +312,7 @@ func addStmtBindVarOperator(t *ast.FuncDecl, v []DeclParams) error {
 				_stmt = append(_stmt, body)
 				continue
 			}
-			
+
 			// check whether is the variable that we are finding.
 			// x,y := 1, "ff"
 			// lhs    rhs
@@ -314,7 +327,7 @@ func addStmtBindVarOperator(t *ast.FuncDecl, v []DeclParams) error {
 					}
 				}
 			}
-			
+
 			// The variable is not we are finding, so ignore it.
 			if !jump {
 				_stmt = append(_stmt, body)
@@ -326,6 +339,6 @@ func addStmtBindVarOperator(t *ast.FuncDecl, v []DeclParams) error {
 	if len(_stmt) > 0 {
 		t.Body.List = _stmt
 	}
-	
+
 	return nil
 }
