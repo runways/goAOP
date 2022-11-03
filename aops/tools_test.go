@@ -33,9 +33,10 @@ func Test_getParamsFromID(t *testing.T) {
 			},
 		},
 	}
+	ij := injectDetail{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := getParamsFromID(tt.args.id)
+			got, err := ij.getParamsFromID(tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getParamsFromID() error = %v, wantErr %v", err, tt.wantErr)
 				return

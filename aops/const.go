@@ -19,3 +19,7 @@ const (
 	AddReturnFuncWithoutVarStmtStr     = "add-return-func-without-var"
 	AddReturnFuncWithVarStmtStr        = "add-return-func-with-var"
 )
+
+const (
+	aopInjectLabel = "@inject"
+)

@@ -250,27 +250,32 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 							var stats []ast.Stmt
 							for idx, id := range fn.aopIds {
 
-								funcVarStmt, exprs, err := getAddFuncWithoutDependsStmt(stmt[id], fn.originIds[idx])
+								ij := injectDetail{
+									owner: fn.owner,
+									name:  fn.name,
+								}
+
+								funcVarStmt, exprs, err := ij.getAddFuncWithoutDependsStmt(stmt[id], fn.originIds[idx])
 								if err != nil {
 									return nil, err
 								}
 
-								stmts, err := getDeferFuncStmt(stmt[id])
+								stmts, err := ij.getDeferFuncStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}
 
-								funcs, depends, err := getFuncStmt(stmt[id])
+								funcs, depends, err := ij.getFuncStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}
 
-								rets, err := getReturnFuncWithoutVarStmt(stmt[id])
+								rets, err := ij.getReturnFuncWithoutVarStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}
 
-								retVars, retDepends, err := getReturnFuncWithVarStmt(stmt[id])
+								retVars, retDepends, err := ij.getReturnFuncWithVarStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}

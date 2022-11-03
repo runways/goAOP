@@ -11,7 +11,12 @@ import (
 	"strings"
 )
 
-func getAddFuncWithoutDependsStmt(sp StmtParams, id string) (stmt []ast.Stmt, expr []ast.Expr, err error) {
+type injectDetail struct {
+	owner string
+	name  string
+}
+
+func (ij injectDetail) getAddFuncWithoutDependsStmt(sp StmtParams, id string) (stmt []ast.Stmt, expr []ast.Expr, err error) {
 	for _, s := range sp.Stmts {
 		switch s.Kind {
 		case AddFuncWithoutDepends:
@@ -19,7 +24,7 @@ func getAddFuncWithoutDependsStmt(sp StmtParams, id string) (stmt []ast.Stmt, ex
 			return nil, expr, err
 		case AddFuncWithoutDependsWithInject:
 			//	parser the id param, and declare these params
-			params, err := getParamsFromID(id)
+			params, err := ij.getParamsFromID(id)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -37,7 +42,7 @@ func getAddFuncWithoutDependsStmt(sp StmtParams, id string) (stmt []ast.Stmt, ex
 	return
 }
 
-func getParamsFromID(id string) ([]string, error) {
+func (ij injectDetail) getParamsFromID(id string) ([]string, error) {
 	var params []string
 	paths, err := zs.SymExstact(id, "(", ")")
 	if err != nil {
@@ -48,14 +53,33 @@ func getParamsFromID(id string) ([]string, error) {
 	for _, p := range _paths {
 		_p := strings.Split(p, ":")
 		if len(_p) == 2 {
-			params = append(params, fmt.Sprintf("%s := %v", strings.TrimSpace(_p[0]), strings.TrimSpace(_p[1])))
+			params = append(params, ij.getVariableDeclare(_p))
 		}
 	}
 
 	return params, nil
 }
 
-func getDeferFuncStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
+func (ij injectDetail) getVariableDeclare(id []string) string {
+	val := strings.TrimSpace(id[1])
+	switch val {
+	case aopInjectLabel:
+		return fmt.Sprintf("%s := %v", strings.TrimSpace(id[0]), ij._getAOPInjectLabel())
+	default:
+		return fmt.Sprintf("%s := %v", strings.TrimSpace(id[0]), val)
+	}
+}
+
+func (ij injectDetail) _getAOPInjectLabel() string {
+	str := `inject.AOPLabel{
+		Name:  "%s",
+		Owner: "%s",
+	}`
+
+	return fmt.Sprintf(str, ij.name, ij.owner)
+}
+
+func (ij injectDetail) getDeferFuncStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
 	return getStmt(sp.Stmts, AddDeferFuncStmt)
 }
 
@@ -63,11 +87,11 @@ func getDeferWithVarFuncStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
 	return getStmt(sp.Stmts, AddDeferFuncWithVarStmt)
 }
 
-func getReturnFuncWithoutVarStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
+func (ij injectDetail) getReturnFuncWithoutVarStmt(sp StmtParams) (stmts []ast.Stmt, err error) {
 	return getStmt(sp.Stmts, AddReturnFuncWithoutVarStmt)
 }
 
-func getReturnFuncWithVarStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
+func (ij injectDetail) getReturnFuncWithVarStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
 	for _, s := range sp.Stmts {
 		if s.Kind == AddReturnFuncWithVarStmt {
 			stmts, err := getStmt(sp.Stmts, AddReturnFuncWithVarStmt)
@@ -77,7 +101,7 @@ func getReturnFuncWithVarStmt(sp StmtParams) (stmts []ast.Stmt, depends []string
 
 	return
 }
-func getFuncStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
+func (ij injectDetail) getFuncStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
 	for _, s := range sp.Stmts {
 		if s.Kind == AddFuncWithVarStmt {
 			stmts, err := getStmt(sp.Stmts, s.Kind)

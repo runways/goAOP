@@ -863,6 +863,51 @@ func TestAddCode(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "A ID with inject param",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{
+				pkgs: map[string][]fun{
+					"../cases/case-01/code.go": []fun{
+						{
+							originIds: []string{
+								"@middleware-injection(path:100, name:\"a string param\", f:@inject)",
+							},
+							owner: "FirstStruct",
+							name:  "invokeFiveFunctionWithInjection",
+							aopIds: []string{
+								"@middleware-injection",
+							},
+						},
+					},
+				},
+				stmt: map[string]StmtParams{
+					"@middleware-injection": {
+						Stmts: []StmtParam{
+							{
+								Kind: AddFuncWithoutDependsWithInject,
+								Stmt: []string{
+									`
+	fmt.Println("path: %v, name: %v inject: %v",path, name, f)
+`,
+								},
+								Depends: nil,
+							},
+						},
+					},
+				},
+				replace: false,
+			},
+			want: map[string][]string{
+				"../cases/case-01/code.go": []string{
+					"@middleware-injection",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Has same variables, insert correct position test",
 			args: struct {
 				pkgs    map[string][]fun

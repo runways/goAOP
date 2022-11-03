@@ -40,6 +40,19 @@ package case_01
 //	)
 //
 //}
+// 5. `invokeFiveFunctionWithInjection` use two params and a inject param. When execute finish, the code will be:
+//func (fs FirstStruct) invokeFiveFunctionWithInjection() {
+//	path := 100
+//	name := "a string param"
+//	f := inject.
+//		AOPLabel{Name: "invokeFiveFunctionWithInjection",
+//		Owner: "FirstStruct"}
+//	fmt.Println("path: %v, name: %v inject: %v",
+//
+//		path, name, f)
+//
+//}
+// If user use inject id, please add `"github.com/runways/goAOP/inject"` in Pack block.
 
 type FirstStruct struct {
 	name string `json:"name"`
@@ -61,3 +74,7 @@ func (fs FirstStruct) invokeThirdFunctionWithInjection() {}
 // invokeFourFunctionWithInjection
 // @middleware-injection(path:100, name:"a string param")
 func (fs FirstStruct) invokeFourFunctionWithInjection() {}
+
+// invokeFiveFunctionWithInjection
+// @middleware-injection(path:100, name:"a string param", f:@inject)
+func (fs FirstStruct) invokeFiveFunctionWithInjection() {}
