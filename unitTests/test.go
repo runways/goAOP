@@ -2,6 +2,7 @@ package unitTests
 
 import (
 	"fmt"
+	m "math"
 )
 
 type FirstStruct struct {
@@ -14,8 +15,10 @@ type FirstStruct struct {
 // @middleware-b
 // @middleware-return
 func (fs FirstStruct) InvokeFirstFunction() string {
+	y := m.Round(10)
 	x := "a pre-defind variable"
-	fmt.Println("---> fs.InvokeFirstFunction", x)
+	
+	fmt.Println("---> fs.InvokeFirstFunction", x, y)
 	
 	// Since this function return a string, but it will not insert
 	// 'return code' although user use @middleware-return

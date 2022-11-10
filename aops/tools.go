@@ -28,17 +28,17 @@ func (ij injectDetail) getAddFuncWithoutDependsStmt(sp StmtParams, id string) (s
 			if err != nil {
 				return nil, nil, err
 			}
-
+			
 			paramStmt, err := getStmtsFromStmt(params)
 			if err != nil {
 				return nil, nil, err
 			}
-
+			
 			expr, err = getExprsFromStmt(s.Stmt)
 			return paramStmt, expr, err
 		}
 	}
-
+	
 	return
 }
 
@@ -48,7 +48,7 @@ func (ij injectDetail) getParamsFromID(id string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	_paths := strings.Split(paths[0], ",")
 	for _, p := range _paths {
 		_p := strings.Split(p, ":")
@@ -56,7 +56,7 @@ func (ij injectDetail) getParamsFromID(id string) ([]string, error) {
 			params = append(params, ij.getVariableDeclare(_p))
 		}
 	}
-
+	
 	return params, nil
 }
 
@@ -75,7 +75,7 @@ func (ij injectDetail) _getAOPInjectLabel() string {
 		Name:  "%s",
 		Owner: "%s",
 	}`
-
+	
 	return fmt.Sprintf(str, ij.name, ij.owner)
 }
 
@@ -98,17 +98,17 @@ func (ij injectDetail) getReturnFuncWithVarStmt(sp StmtParams) (stmts []ast.Stmt
 			return stmts, s.Depends, err
 		}
 	}
-
+	
 	return
 }
-func (ij injectDetail) getFuncStmt(sp StmtParams) (stmts []ast.Stmt, depends []string, err error) {
+func (ij injectDetail) getFuncStmt(sp StmtParams) (stmts []ast.Stmt, depends, funcDepends []string, err error) {
 	for _, s := range sp.Stmts {
 		if s.Kind == AddFuncWithVarStmt {
 			stmts, err := getStmt(sp.Stmts, s.Kind)
-			return stmts, s.Depends, err
+			return stmts, s.Depends, s.FuncDepends, err
 		}
 	}
-
+	
 	return
 }
 
@@ -118,7 +118,7 @@ func getStmt(stmt []StmtParam, id OperationKind) (stmts []ast.Stmt, err error) {
 			return getStmtsFromStmt(s.Stmt)
 		}
 	}
-
+	
 	return nil, nil
 }
 
@@ -129,10 +129,10 @@ func getStmtsFromStmt(stmt []string) (stmts []ast.Stmt, err error) {
 		if err != nil {
 			return nil, err
 		}
-
+		
 		stmts = append(stmts, s)
 	}
-
+	
 	return stmts, nil
 }
 
@@ -143,10 +143,10 @@ func getExprsFromStmt(stmt []string) (expr []ast.Expr, err error) {
 		if err != nil {
 			return nil, err
 		}
-
+		
 		expr = append(expr, exp)
 	}
-
+	
 	return
 }
 
@@ -159,7 +159,7 @@ func extractFuncName(name string) string {
 		_name := strings.Split(name, "(")
 		return _name[0]
 	}
-
+	
 	return name
 }
 
@@ -171,14 +171,14 @@ func getIntersection(arr []string, ids map[string]struct{}) []string {
 	if len(arr) == 0 {
 		return nil
 	}
-
+	
 	var result []string
 	for _, a := range arr {
 		if _, exist := ids[extractFuncName(a)]; exist {
 			result = append(result, extractFuncName(a))
 		}
 	}
-
+	
 	return result
 }
 
@@ -203,7 +203,7 @@ func extractIdFromComment(comment string) []string {
 			}
 		}
 	}
-
+	
 	return result
 }
 
@@ -236,15 +236,15 @@ func isEqual(fd *ast.FuncDecl, fn fun) bool {
 	if fd.Recv != nil && len(fd.Recv.List) > 0 && fn.owner != "" {
 		return fd.Recv.List[0].Type.(*ast.Ident).Name == fn.owner && fd.Name.String() == fn.name
 	}
-
+	
 	if fd.Recv == nil && fn.owner == "" {
 		return fd.Name.String() == fn.name
 	}
-
+	
 	if fd.Recv != nil && fn.owner == "" {
 		return false
 	}
-
+	
 	return false
 }
 
@@ -254,7 +254,7 @@ func fullId(t *ast.FuncDecl) string {
 	if t.Recv != nil && len(t.Recv.List) > 0 {
 		r = t.Recv.List[0].Type.(*ast.Ident).Name
 	}
-
+	
 	return fmt.Sprintf("%s-%s", name, r)
 }
 
@@ -267,11 +267,11 @@ func removeDuplicate(m map[string][]string) map[string][]string {
 		for _, v := range val {
 			_m[v] = struct{}{}
 		}
-
+		
 		for v := range _m {
 			_ms = append(_ms, v)
 		}
-
+		
 		sort.Strings(_ms)
 		m[key] = _ms
 	}
@@ -282,15 +282,15 @@ func parserImport(p Pack) (impor []ast.Spec, err error) {
 	comment := fmt.Sprintf(`package main
 import %s %s
 `, p.Name, p.Path)
-
+	
 	f, err := parser.ParseFile(token.NewFileSet(), "", comment, parser.ImportsOnly)
 	if err != nil {
 		return
 	}
-
+	
 	if len(f.Decls) == 0 {
 		return nil, fmt.Errorf("import parser failed. please verify Pack[%s %s] whether valid. ", p.Name, p.Path)
 	}
-
+	
 	return f.Decls[0].(*ast.GenDecl).Specs, nil
 }
