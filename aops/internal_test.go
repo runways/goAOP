@@ -72,12 +72,12 @@ func Test_parserStmt(t *testing.T) {
 }
 
 func Test_Position(t *testing.T) {
-
+	
 	pkg, _ := parser.ParseDir(token.NewFileSet(), "../unitTests", func(info fs.FileInfo) bool {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-
+	
 	type args struct {
 		pkgs map[string]*ast.Package
 		id   map[string]struct{}
@@ -153,9 +153,9 @@ func Test_AddCode(t *testing.T) {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-
+	
 	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}, "@middleware-return": {}})
-
+	
 	type args struct {
 		pkgs    map[string][]fun
 		stmt    map[string]StmtParams
@@ -190,15 +190,26 @@ func Test_AddCode(t *testing.T) {
 							},
 							Depends: nil,
 						},
+						//{
+						//	Kind: AddFuncWithVarStmt,
+						//	Stmt: []string{
+						//		`if 1>0 {
+						//			fmt.Println("add a var func by addCode")
+						//		}`,
+						//	},
+						//	Depends: []string{
+						//		"x",
+						//	},
+						//},
 						{
 							Kind: AddFuncWithVarStmt,
 							Stmt: []string{
 								`if 1>0 {
-									fmt.Println("add a var func by addCode")
+									fmt.Println("add a func depend by addCode")
 								}`,
 							},
-							Depends: []string{
-								"x",
+							FuncDepends: []string{
+								"m.Round",
 							},
 						},
 					},
@@ -583,9 +594,9 @@ func TestAddImport(t *testing.T) {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-
+	
 	pkgs := Position(pkg, map[string]struct{}{"@middleware-a": {}, "@middleware-b": {}})
-
+	
 	type args struct {
 		pkgs    map[string][]fun
 		stmt    map[string]StmtParams
@@ -630,14 +641,14 @@ func TestAddImport(t *testing.T) {
 }
 
 func TestAddCode(t *testing.T) {
-
+	
 	pkg, _ := parser.ParseDir(token.NewFileSet(), "../cases/insert-code-behind-variable", func(info fs.FileInfo) bool {
 		//	ignore all logic check
 		return true
 	}, parser.ParseComments)
-
+	
 	pkgs := Position(pkg, map[string]struct{}{"@middleware-err": {}})
-
+	
 	type args struct {
 		pkgs    map[string][]fun
 		stmt    map[string]StmtParams
@@ -1100,7 +1111,7 @@ func TestReturnWithVar(t *testing.T) {
 		stmt    map[string]StmtParams
 		replace bool
 	}
-
+	
 	tests := []struct {
 		name    string
 		args    args
@@ -1126,7 +1137,7 @@ func TestReturnWithVar(t *testing.T) {
 			}, stmt: map[string]StmtParams{
 				"@middleware-return-err": {
 					Stmts: []StmtParam{
-
+						
 						{
 							Kind: AddReturnFuncWithVarStmt,
 							Stmt: []string{
@@ -1168,7 +1179,7 @@ func TestReturnWithVar(t *testing.T) {
 			}, stmt: map[string]StmtParams{
 				"@middleware-return-err-body": {
 					Stmts: []StmtParam{
-
+						
 						{
 							Kind: AddReturnFuncWithVarStmt,
 							Stmt: []string{
@@ -1210,7 +1221,7 @@ func TestReturnWithVar(t *testing.T) {
 			}, stmt: map[string]StmtParams{
 				"@middleware-func-var-err": {
 					Stmts: []StmtParam{
-
+						
 						{
 							Kind: AddReturnFuncWithVarStmt,
 							Stmt: []string{
@@ -1242,6 +1253,9 @@ func TestReturnWithVar(t *testing.T) {
 			}{pkgs: map[string][]fun{
 				"../cases/insert-return-func-with-var/test.go": []fun{
 					{
+						originIds: []string{
+							"@middleware-err",
+						},
 						owner: "",
 						name:  "invokeSixFunction",
 						aopIds: []string{
@@ -1252,7 +1266,7 @@ func TestReturnWithVar(t *testing.T) {
 			}, stmt: map[string]StmtParams{
 				"@middleware-err": {
 					Stmts: []StmtParam{
-
+						
 						{
 							Kind: AddReturnFuncWithVarStmt,
 							Stmt: []string{
@@ -1276,6 +1290,75 @@ func TestReturnWithVar(t *testing.T) {
 			wantErr: false,
 		},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := AddCode(tt.args.pkgs, tt.args.stmt, tt.args.replace)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TestReturnWithVar() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TestReturnWithVar() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInjectionWithFuncDepend(t *testing.T) {
+	type args struct {
+		pkgs    map[string][]fun
+		stmt    map[string]StmtParams
+		replace bool
+	}
+	
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string][]string
+		wantErr bool
+	}{
+		{
+			name: "normal test",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/case-02/code.go": []fun{
+					{
+						originIds: []string{
+							"@middleware-func-depend",
+						},
+						owner: "FirstStruct",
+						name:  "addWithFuncDependWithInjection",
+						aopIds: []string{
+							"@middleware-func-depend",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
+				"@middleware-func-depend": {
+					Stmts: []StmtParam{
+						
+						{
+							Kind: AddFuncWithVarStmt,
+							Stmt: []string{
+								`go fmt.Println("xxx")`,
+							},
+							FuncDepends: []string{"math.Round"},
+						},
+					},
+				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/case-02/code.go": []string{
+					"@middleware-func-depend",
+				},
+			},
+			wantErr: false,
+		},
+	}
+	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := AddCode(tt.args.pkgs, tt.args.stmt, tt.args.replace)

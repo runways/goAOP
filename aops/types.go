@@ -49,8 +49,9 @@ type Pack struct {
 
 // DeclParams store stmt insert behind specify variable
 type DeclParams struct {
-	VarName string
-	Stmt    []string
+	VarName  string // VarName is the variable name ,like 'x := 1', the x is var name.
+	Stmt     []string
+	FuncName string // FuncName is the func name, like 'x := fmt.Sprintf', the `fmt.Sprintf` is func name.
 }
 
 // StmtParam store the metadata of stmt.
@@ -58,9 +59,10 @@ type DeclParams struct {
 // Stmt is the string of stmt, use parseStmt before use these.
 // Depends are the dependence conditions
 type StmtParam struct {
-	Kind    OperationKind
-	Stmt    []string
-	Depends []string
+	Kind        OperationKind
+	Stmt        []string
+	Depends     []string
+	FuncDepends []string
 }
 
 type StmtDepend interface {
