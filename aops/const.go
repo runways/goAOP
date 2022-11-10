@@ -23,3 +23,7 @@ const (
 const (
 	aopInjectLabel = "@inject"
 )
+
+const (
+	funcDependVarPlaceHolderVarName = "__varName__"
+)

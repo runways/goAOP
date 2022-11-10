@@ -101,11 +101,11 @@ func (ij injectDetail) getReturnFuncWithVarStmt(sp StmtParams) (stmts []ast.Stmt
 	
 	return
 }
-func (ij injectDetail) getFuncStmt(sp StmtParams) (stmts []ast.Stmt, depends, funcDepends []string, err error) {
+func (ij injectDetail) getFuncStmt(sp StmtParams) (stmts []ast.Stmt, depends, funcDepends, originStmtStr []string, err error) {
 	for _, s := range sp.Stmts {
 		if s.Kind == AddFuncWithVarStmt {
 			stmts, err := getStmt(sp.Stmts, s.Kind)
-			return stmts, s.Depends, s.FuncDepends, err
+			return stmts, s.Depends, s.FuncDepends, s.Stmt, err
 		}
 	}
 	
