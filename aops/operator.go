@@ -3,6 +3,7 @@ package aops
 import (
 	"fmt"
 	"go/ast"
+	"strings"
 )
 
 // There are all support operators.  These operators execute by bellow orders:
@@ -76,13 +77,13 @@ func addStmtAsFuncWithoutVarOperator(t *ast.FuncDecl, def []ast.Stmt) error {
 
 // addStmtAsFuncWithVarOperator Insert stmt with specify variable.
 // Now only support specify one variable. If there has no depend on variable, it will do nothing.
-func addStmtAsFuncWithVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend, funcDepends []string) error {
+func addStmtAsFuncWithVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend, funcDepends, stmtStr []string) error {
 	if len(depend) > 0 && len(funcDepends) > 0 {
 		return addStmtBlockBindVarOperator(t, []DeclParams{
 			{
 				VarName:  depend[0],
 				FuncName: funcDepends[0],
-				Stmt:     nil,
+				Stmt:     stmtStr,
 			},
 		}, def)
 	}
@@ -91,7 +92,7 @@ func addStmtAsFuncWithVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend, funcD
 		return addStmtBlockBindVarOperator(t, []DeclParams{
 			{
 				VarName: depend[0],
-				Stmt:    nil,
+				Stmt:    stmtStr,
 			},
 		}, def)
 	}
@@ -100,7 +101,7 @@ func addStmtAsFuncWithVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend, funcD
 		return addStmtBlockBindVarOperator(t, []DeclParams{
 			{
 				FuncName: funcDepends[0],
-				Stmt:     nil,
+				Stmt:     stmtStr,
 			},
 		}, def)
 	}
@@ -287,6 +288,7 @@ func addStmtBlockBindVarOperator(t *ast.FuncDecl, v []DeclParams, stmt []ast.Stm
 				for _, rhs := range as.Rhs {
 					// handle function invoke scene
 					// like m := math.Round(1) math.Round is rhs.
+					lhs := getLhs(as)
 					if call, ok := rhs.(*ast.CallExpr); ok {
 						name := ""
 						switch t := call.Fun.(type) {
@@ -298,7 +300,12 @@ func addStmtBlockBindVarOperator(t *ast.FuncDecl, v []DeclParams, stmt []ast.Stm
 						}
 						if name == dp.FuncName &&
 							!jump {
-							//	I find dp.VarName position. Then insert all stmt behind it.
+							//	I find dp.FuncName position. Then insert all stmt behind it.
+							__stmtBlock, _ := funcDependStmtFilter(dp.Stmt, lhs)
+							if len(__stmtBlock) > 0 {
+								_stmtBlock = __stmtBlock
+							}
+							
 							_stmt = append(_stmt, body)
 							_stmt = append(_stmt, _stmtBlock...)
 							jump = true
@@ -320,6 +327,46 @@ func addStmtBlockBindVarOperator(t *ast.FuncDecl, v []DeclParams, stmt []ast.Stm
 	}
 	
 	return nil
+}
+
+// getLhs get all lhs name from specify *ast.AssignStmt
+func getLhs(as *ast.AssignStmt) (left []string) {
+	if len(as.Lhs) == 0 {
+		return
+	}
+	
+	for _, l := range as.Lhs {
+		if ident, ok := l.(*ast.Ident); ok {
+			left = append(left, ident.Name)
+		}
+	}
+	
+	return
+}
+
+// funcDependStmtFilter check whether stmtStr has placeholder.
+// If it has placeholder, then re-generate ast.Stmt.
+// Otherwise, do nothing.
+// Now I only support replace one placeholder. Like that,
+// fmt.Printf("%s", @varName), then will be replaced to fmt.Printf("%s", "y")
+func funcDependStmtFilter(stmtStr []string, leftVarName []string) (stmt []ast.Stmt, err error) {
+	if len(leftVarName) == 0 {
+		return nil, nil
+	}
+	
+	for _, str := range stmtStr {
+		if strings.Contains(str, funcDependVarPlaceHolderVarName) {
+			str = strings.Replace(str, funcDependVarPlaceHolderVarName, leftVarName[0], -1)
+		}
+		s, err := parserStmt(str)
+		if err != nil {
+			return nil, err
+		}
+		
+		stmt = append(stmt, s)
+	}
+	
+	return
 }
 
 // addStmtBindVar insert declare stmt behind specify variable.

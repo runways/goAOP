@@ -265,7 +265,7 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 									return nil, err
 								}
 								
-								funcs, depends, funcDepends, err := ij.getFuncStmt(stmt[id])
+								funcs, depends, funcDepends, stmtStr, err := ij.getFuncStmt(stmt[id])
 								if err != nil {
 									return nil, err
 								}
@@ -294,7 +294,7 @@ func AddCode(pkgs map[string][]fun, stmt map[string]StmtParams, replace bool) (m
 								if err != nil {
 									return nil, err
 								}
-								err = addStmtAsFuncWithVarOperator(t, funcs, depends, funcDepends)
+								err = addStmtAsFuncWithVarOperator(t, funcs, depends, funcDepends, stmtStr)
 								if err != nil {
 									return nil, err
 								}

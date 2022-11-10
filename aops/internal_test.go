@@ -1343,7 +1343,7 @@ func TestInjectionWithFuncDepend(t *testing.T) {
 						{
 							Kind: AddFuncWithVarStmt,
 							Stmt: []string{
-								`go fmt.Println("xxx")`,
+								`go fmt.Println(__varName__)`,
 							},
 							FuncDepends: []string{"math.Round"},
 						},
