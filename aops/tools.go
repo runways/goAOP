@@ -234,7 +234,14 @@ func parserStmt(stmt string) (ast.Stmt, error) {
 
 func isEqual(fd *ast.FuncDecl, fn fun) bool {
 	if fd.Recv != nil && len(fd.Recv.List) > 0 && fn.owner != "" {
-		return fd.Recv.List[0].Type.(*ast.Ident).Name == fn.owner && fd.Name.String() == fn.name
+		owner := ""
+		switch t := fd.Recv.List[0].Type.(type) {
+		case *ast.Ident:
+			owner = t.Name
+		case *ast.StarExpr:
+			owner = t.X.(*ast.Ident).Name
+		}
+		return owner == fn.owner && fd.Name.String() == fn.name
 	}
 	
 	if fd.Recv == nil && fn.owner == "" {
@@ -252,7 +259,13 @@ func fullId(t *ast.FuncDecl) string {
 	r := ""
 	name := t.Name.String()
 	if t.Recv != nil && len(t.Recv.List) > 0 {
-		r = t.Recv.List[0].Type.(*ast.Ident).Name
+		switch _t := t.Recv.List[0].Type.(type) {
+		case *ast.Ident:
+			r = _t.Name
+		case *ast.StarExpr:
+			r = _t.X.(*ast.Ident).Name
+		}
+		//r = t.Recv.List[0].Type.(*ast.Ident).Name
 	}
 	
 	return fmt.Sprintf("%s-%s", name, r)

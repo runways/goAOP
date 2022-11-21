@@ -120,3 +120,7 @@ Then execute `./bin/aop -config example/aop.toml -dir ./unitTests`, you will see
 ## How to use goAOP sdk?
 
 `aops` is sdk dir, developer can invoke sdk in there's code. Since hard to understand go parser package, so developer can reference sdk usage from unit test code in aops dir.
+
+## Some use cases.
+
++ [Use func as a depend condition](doc/case-01.md).
