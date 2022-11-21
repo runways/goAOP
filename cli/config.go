@@ -31,9 +31,10 @@ type pack struct {
 // signal variable. No need type variable type.
 type Stmt struct {
 	//ID     string   `toml:"id"`
-	Kind   string   `toml:"kind"`
-	Code   []string `toml:"code,omitempty"`
-	Depend []string `toml:"depend"`
+	Kind      string   `toml:"kind"`
+	Code      []string `toml:"code,omitempty"`
+	Depend    []string `toml:"depend,omitempty"`
+	FunDepend []string `toml:"funDepend,omitempty"`
 }
 
 func parseConfigFromFile(file string) (c Config, err error) {
@@ -41,7 +42,7 @@ func parseConfigFromFile(file string) (c Config, err error) {
 	if err != nil {
 		return
 	}
-
+	
 	mwm := make(map[string]aops.StmtParams, len(c.MidWare))
 	for _, m := range c.MidWare {
 		var p []aops.Pack
@@ -52,54 +53,60 @@ func parseConfigFromFile(file string) (c Config, err error) {
 				Path: strings.TrimSpace(_p.Path),
 			})
 		}
-
+		
 		for _, s := range m.Stmt {
 			switch strings.TrimSpace(strings.ToLower(s.Kind)) {
 			case aops.AddFuncWithoutDependsStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddFuncWithoutDepends,
-					Stmt:    s.Code,
-					Depends: nil,
+					Kind:        aops.AddFuncWithoutDepends,
+					Stmt:        s.Code,
+					Depends:     nil,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddFuncWithVarStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddFuncWithVarStmt,
-					Stmt:    s.Code,
-					Depends: s.Depend,
+					Kind:        aops.AddFuncWithVarStmt,
+					Stmt:        s.Code,
+					Depends:     s.Depend,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddDeferFuncStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddDeferFuncStmt,
-					Stmt:    s.Code,
-					Depends: nil,
+					Kind:        aops.AddDeferFuncStmt,
+					Stmt:        s.Code,
+					Depends:     nil,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddDeferFuncWithVarStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddDeferFuncWithVarStmt,
-					Stmt:    s.Code,
-					Depends: s.Depend,
+					Kind:        aops.AddDeferFuncWithVarStmt,
+					Stmt:        s.Code,
+					Depends:     s.Depend,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddReturnFuncWithoutVarStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddReturnFuncWithoutVarStmt,
-					Stmt:    s.Code,
-					Depends: nil,
+					Kind:        aops.AddReturnFuncWithoutVarStmt,
+					Stmt:        s.Code,
+					Depends:     nil,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddReturnFuncWithVarStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddReturnFuncWithVarStmt,
-					Stmt:    s.Code,
-					Depends: s.Depend,
+					Kind:        aops.AddReturnFuncWithVarStmt,
+					Stmt:        s.Code,
+					Depends:     s.Depend,
+					FuncDepends: s.FunDepend,
 				})
 			}
 		}
-
+		
 		mwm[m.ID] = aops.StmtParams{
 			Stmts: stmtBlock,
 			Packs: p,
 		}
 	}
-
+	
 	c.MidWareMap = mwm
 	return
 }
@@ -109,10 +116,10 @@ func parseConfig(file string) (c Config, err error) {
 	if err != nil {
 		return
 	}
-
+	
 	mwm := make(map[string]aops.StmtParams)
 	if len(c.Include) > 0 {
-
+		
 		for _, i := range c.Include {
 			c, err := parseConfigFromFile(i)
 			if err != nil {
@@ -122,9 +129,9 @@ func parseConfig(file string) (c Config, err error) {
 				mwm[key] = val
 			}
 		}
-
+		
 	}
-
+	
 	//mwm := make(map[string]aops.StmtParams, len(c.MidWare))
 	for _, m := range c.MidWare {
 		var p []aops.Pack
@@ -135,54 +142,60 @@ func parseConfig(file string) (c Config, err error) {
 				Path: strings.TrimSpace(_p.Path),
 			})
 		}
-
+		
 		for _, s := range m.Stmt {
 			switch strings.TrimSpace(strings.ToLower(s.Kind)) {
 			case aops.AddFuncWithoutDependsStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddFuncWithoutDepends,
-					Stmt:    s.Code,
-					Depends: nil,
+					Kind:        aops.AddFuncWithoutDepends,
+					Stmt:        s.Code,
+					Depends:     nil,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddFuncWithVarStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddFuncWithVarStmt,
-					Stmt:    s.Code,
-					Depends: s.Depend,
+					Kind:        aops.AddFuncWithVarStmt,
+					Stmt:        s.Code,
+					Depends:     s.Depend,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddDeferFuncStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddDeferFuncStmt,
-					Stmt:    s.Code,
-					Depends: nil,
+					Kind:        aops.AddDeferFuncStmt,
+					Stmt:        s.Code,
+					Depends:     nil,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddDeferFuncWithVarStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddDeferFuncWithVarStmt,
-					Stmt:    s.Code,
-					Depends: s.Depend,
+					Kind:        aops.AddDeferFuncWithVarStmt,
+					Stmt:        s.Code,
+					Depends:     s.Depend,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddReturnFuncWithoutVarStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddReturnFuncWithoutVarStmt,
-					Stmt:    s.Code,
-					Depends: nil,
+					Kind:        aops.AddReturnFuncWithoutVarStmt,
+					Stmt:        s.Code,
+					Depends:     nil,
+					FuncDepends: s.FunDepend,
 				})
 			case aops.AddReturnFuncWithVarStmtStr:
 				stmtBlock = append(stmtBlock, aops.StmtParam{
-					Kind:    aops.AddReturnFuncWithVarStmt,
-					Stmt:    s.Code,
-					Depends: s.Depend,
+					Kind:        aops.AddReturnFuncWithVarStmt,
+					Stmt:        s.Code,
+					Depends:     s.Depend,
+					FuncDepends: s.FunDepend,
 				})
 			}
 		}
-
+		
 		mwm[m.ID] = aops.StmtParams{
 			Stmts: stmtBlock,
 			Packs: p,
 		}
 	}
-
+	
 	c.MidWareMap = mwm
 	return
 }

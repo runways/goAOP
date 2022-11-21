@@ -701,7 +701,7 @@ func TestAddCode(t *testing.T) {
 				replace bool
 			}{
 				pkgs: map[string][]fun{
-					"../cases/case-01/code.go": []fun{
+					"../cases/case-01.md/code.go": []fun{
 						{
 							originIds: []string{
 								"@middleware-injection(path:\"\")",
@@ -732,7 +732,7 @@ func TestAddCode(t *testing.T) {
 				replace: false,
 			},
 			want: map[string][]string{
-				"../cases/case-01/code.go": []string{
+				"../cases/case-01.md/code.go": []string{
 					"@middleware-injection",
 				},
 			},
@@ -746,7 +746,7 @@ func TestAddCode(t *testing.T) {
 				replace bool
 			}{
 				pkgs: map[string][]fun{
-					"../cases/case-01/code.go": []fun{
+					"../cases/case-01.md/code.go": []fun{
 						{
 							originIds: []string{
 								"@middleware-injection(path:100)",
@@ -777,7 +777,7 @@ func TestAddCode(t *testing.T) {
 				replace: false,
 			},
 			want: map[string][]string{
-				"../cases/case-01/code.go": []string{
+				"../cases/case-01.md/code.go": []string{
 					"@middleware-injection",
 				},
 			},
@@ -791,7 +791,7 @@ func TestAddCode(t *testing.T) {
 				replace bool
 			}{
 				pkgs: map[string][]fun{
-					"../cases/case-01/code.go": []fun{
+					"../cases/case-01.md/code.go": []fun{
 						{
 							originIds: []string{
 								"@middleware-injection(path:100, name:\"a string param\")",
@@ -822,7 +822,7 @@ func TestAddCode(t *testing.T) {
 				replace: false,
 			},
 			want: map[string][]string{
-				"../cases/case-01/code.go": []string{
+				"../cases/case-01.md/code.go": []string{
 					"@middleware-injection",
 				},
 			},
@@ -836,7 +836,7 @@ func TestAddCode(t *testing.T) {
 				replace bool
 			}{
 				pkgs: map[string][]fun{
-					"../cases/case-01/code.go": []fun{
+					"../cases/case-01.md/code.go": []fun{
 						{
 							originIds: []string{
 								"@middleware-injection(path:\"/user/id\")",
@@ -867,7 +867,7 @@ func TestAddCode(t *testing.T) {
 				replace: false,
 			},
 			want: map[string][]string{
-				"../cases/case-01/code.go": []string{
+				"../cases/case-01.md/code.go": []string{
 					"@middleware-injection",
 				},
 			},
@@ -881,7 +881,7 @@ func TestAddCode(t *testing.T) {
 				replace bool
 			}{
 				pkgs: map[string][]fun{
-					"../cases/case-01/code.go": []fun{
+					"../cases/case-01.md/code.go": []fun{
 						{
 							originIds: []string{
 								"@middleware-injection(path:100, name:\"a string param\", f:@inject)",
@@ -912,7 +912,7 @@ func TestAddCode(t *testing.T) {
 				replace: false,
 			},
 			want: map[string][]string{
-				"../cases/case-01/code.go": []string{
+				"../cases/case-01.md/code.go": []string{
 					"@middleware-injection",
 				},
 			},

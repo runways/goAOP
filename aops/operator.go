@@ -336,9 +336,20 @@ func getLhs(as *ast.AssignStmt) (left []string) {
 	}
 	
 	for _, l := range as.Lhs {
-		if ident, ok := l.(*ast.Ident); ok {
-			left = append(left, ident.Name)
+		switch _l := l.(type) {
+		case *ast.Ident:
+			left = append(left, _l.Name)
+		case *ast.SelectorExpr:
+			name := ""
+			if ident, ok := _l.X.(*ast.Ident); ok {
+				name = ident.Name
+			}
+			name += "." + _l.Sel.Name
+			left = append(left, name)
 		}
+		//if ident, ok := l.(*ast.Ident); ok {
+		//	left = append(left, ident.Name)
+		//}
 	}
 	
 	return

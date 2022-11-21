@@ -109,13 +109,29 @@ func Position(pkgs map[string]*ast.Package, ids map[string]struct{}) map[string]
 										aopIds:    validId,
 									})
 								} else {
-									owner := t.Recv.List[0].Type.(*ast.Ident)
-									functions = append(functions, fun{
-										originIds: _ids,
-										owner:     owner.Name,
-										name:      t.Name.String(),
-										aopIds:    validId,
-									})
+									switch owner := t.Recv.List[0].Type.(type) {
+									case *ast.Ident:
+										functions = append(functions, fun{
+											originIds: _ids,
+											owner:     owner.Name,
+											name:      t.Name.String(),
+											aopIds:    validId,
+										})
+									case *ast.StarExpr:
+										functions = append(functions, fun{
+											originIds: _ids,
+											owner:     owner.X.(*ast.Ident).Name,
+											name:      t.Name.String(),
+											aopIds:    validId,
+										})
+									}
+									//owner := t.Recv.List[0].Type.(*ast.Ident)
+									//functions = append(functions, fun{
+									//	originIds: _ids,
+									//	owner:     owner.Name,
+									//	name:      t.Name.String(),
+									//	aopIds:    validId,
+									//})
 								}
 							}
 							
