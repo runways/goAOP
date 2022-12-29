@@ -17,3 +17,9 @@ func (fs FirstStruct) addWithFuncDependWithInjection() {
 	
 	fmt.Println(y)
 }
+
+// addWithFuncDependWithoutBind
+// @middleware-func-without-depend
+func (fs FirstStruct) addWithFuncDependWithoutBind() {
+	fmt.Println("")
+}

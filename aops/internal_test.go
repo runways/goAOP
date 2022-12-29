@@ -1349,12 +1349,42 @@ func TestInjectionWithFuncDepend(t *testing.T) {
 						},
 					},
 				},
+			}, replace: false},
+			want: map[string][]string{
+				"../cases/case-02/code.go": []string{
+					"@middleware-func-depend",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "normal test",
+			args: struct {
+				pkgs    map[string][]fun
+				stmt    map[string]StmtParams
+				replace bool
+			}{pkgs: map[string][]fun{
+				"../cases/case-02/code.go": []fun{
+					{
+						originIds: []string{
+							"@middleware-func-without-depend",
+						},
+						owner: "FirstStruct",
+						name:  "addWithFuncDependWithoutBind",
+						aopIds: []string{
+							"@middleware-func-without-depend",
+						},
+					},
+				},
+			}, stmt: map[string]StmtParams{
 				"@middleware-func-without-depend": {
 					Stmts: []StmtParam{
 						{
 							Kind: AddFuncWithVarStmt,
 							Stmt: []string{
 								`x:=1`,
+								`go fmt.Println(__varName__)`,
+								`defer func(){}()`,
 							},
 						},
 					},
@@ -1362,7 +1392,7 @@ func TestInjectionWithFuncDepend(t *testing.T) {
 			}, replace: false},
 			want: map[string][]string{
 				"../cases/case-02/code.go": []string{
-					"@middleware-func-depend",
+					"@middleware-func-without-depend",
 				},
 			},
 			wantErr: false,
