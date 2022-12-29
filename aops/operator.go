@@ -105,7 +105,12 @@ func addStmtAsFuncWithVarOperator(t *ast.FuncDecl, def []ast.Stmt, depend, funcD
 			},
 		}, def)
 	}
-	return nil
+	
+	return addStmtBlockWithoutBindVarOperator(t, []DeclParams{
+		{
+			Stmt: stmtStr,
+		},
+	}, def)
 }
 
 // addStmtAsReturnOperator check whether this function has a func variable as return data.
@@ -239,6 +244,27 @@ func _addFuncCode(t *ast.ReturnStmt, exprs []ast.Stmt) error {
 			stats = append(stats, rf.Body.List...)
 			rf.Body.List = stats
 		}
+	}
+	
+	return nil
+}
+
+// addStmtBlockWithoutBindVarOperator Insert all stmts in the front of function body.
+// This function not check any dependence variable.
+// See internal_test.go @middleware-func-without-depend case.
+func addStmtBlockWithoutBindVarOperator(t *ast.FuncDecl, v []DeclParams, stmt []ast.Stmt) error {
+	if len(v) == 0 {
+		return nil
+	}
+	
+	var _stmt []ast.Stmt
+	var _stmtBlock []ast.Stmt = stmt
+	
+	_stmt = append(_stmt, _stmtBlock...)
+	_stmt = append(_stmt, t.Body.List...)
+	
+	if len(_stmt) > 0 {
+		t.Body.List = _stmt
 	}
 	
 	return nil

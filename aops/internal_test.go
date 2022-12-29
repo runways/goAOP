@@ -1349,6 +1349,16 @@ func TestInjectionWithFuncDepend(t *testing.T) {
 						},
 					},
 				},
+				"@middleware-func-without-depend": {
+					Stmts: []StmtParam{
+						{
+							Kind: AddFuncWithVarStmt,
+							Stmt: []string{
+								`x:=1`,
+							},
+						},
+					},
+				},
 			}, replace: false},
 			want: map[string][]string{
 				"../cases/case-02/code.go": []string{
