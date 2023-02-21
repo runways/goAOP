@@ -68,7 +68,7 @@ func ParseDir(dir string, filter func(info fs.FileInfo) bool) (map[string]*ast.P
 			return nil, err
 		}
 		for key, value := range _m {
-			m[key] = value
+			m[fmt.Sprintf("%s-%s", d, key)] = value
 		}
 	}
 	
